@@ -1,0 +1,626 @@
+/* public/styles.css (updated modal styles included) */
+:root {
+  --bg: #f4f7fa;
+  --card: #ffffff;
+  --muted: #7a869a;
+  --accent: #1f8ef1;
+  --accent-2: #37d67a;
+  --danger: #ff6b6b;
+  --glass: rgba(255, 255, 255, 0.6);
+  --shadow: 0 6px 18px rgba(18, 38, 63, 0.08);
+  --radius: 12px;
+  font-family: "Cairo", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(180deg, #eef6ff 0%, var(--bg) 60%);
+  color: #102234;
+  direction: rtl;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.brand {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), #6ab8ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+}
+
+.title h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.title p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.top-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(16, 34, 52, 0.04);
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.btn.primary {
+  background: linear-gradient(90deg, var(--accent), #5cc2ff);
+  color: white;
+  border: 0;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+aside.panel {
+  background: var(--card);
+  padding: 18px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.35));
+  border: 1px solid rgba(16, 34, 52, 0.03);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.nav button {
+  text-align: right;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px dashed rgba(16, 34, 52, 0.06);
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.nav button.active {
+  color: var(--accent);
+  border-style: solid;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.table-wrap {
+  overflow: auto;
+  background: var(--card);
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: right;
+  padding: 10px;
+  border-bottom: 1px solid rgba(16, 34, 52, 0.04);
+  font-size: 13px;
+  color: #132033;
+}
+
+th {
+  font-weight: 700;
+  background: transparent;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.form {
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 34, 52, 0.03);
+  box-shadow: var(--shadow);
+}
+
+.hidden {
+  display: none !important;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.field {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+input[type="text"],
+input[type="date"],
+select,
+textarea {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(16, 34, 52, 0.06);
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+}
+
+textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.small {
+  max-width: 160px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  margin-top: 6px;
+}
+
+.chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--glass);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+footer.note {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width:980px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+
+  aside.panel {
+    order: 2;
+  }
+}
+
+/* Map modal styles */
+/* The modal is hidden by default via inline style in HTML to prevent flashing.
+   When shown, we use display:flex to center content. */
+.map-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 12, 25, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.map-modal .map-modal-content {
+  width: 100%;
+  max-width: 900px;
+  background: white;
+  padding: 14px;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+/* Signature Pad Styles */
+.signature-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+  border: 1px solid #e1e8ed;
+}
+
+.signature-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.signature-header h3 {
+  color: #2c3e50;
+  font-size: 1.3rem;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.signature-header p {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.signature-canvas-wrapper {
+  position: relative;
+  border: 2px solid #3498db;
+  border-radius: 8px;
+  background: #fafafa;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+
+#signatureCanvas {
+  display: block;
+  background: white;
+  touch-action: none;
+  cursor: crosshair;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.signature-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #bdc3c7;
+  font-size: 1.1rem;
+  pointer-events: none;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.signature-placeholder svg {
+  width: 40px;
+  height: 40px;
+  opacity: 0.5;
+}
+
+.signature-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.signature-tools {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.signature-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.signature-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.signature-btn-primary {
+  background: #3498db;
+  color: white;
+}
+
+.signature-btn-primary:hover {
+  background: #2980b9;
+  transform: translateY(-1px);
+}
+
+.signature-btn-secondary {
+  background: #95a5a6;
+  color: white;
+}
+
+.signature-btn-secondary:hover {
+  background: #7f8c8d;
+  transform: translateY(-1px);
+}
+
+.signature-btn-danger {
+  background: #e74c3c;
+  color: white;
+}
+
+.signature-btn-danger:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+}
+
+.signature-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.pen-width-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pen-width-control label {
+  font-size: 0.9rem;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.pen-width-input {
+  width: 60px;
+  padding: 6px 10px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.signature-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.signature-status.empty {
+  background: #fee;
+  color: #e74c3c;
+}
+
+.signature-status.ready {
+  background: #efe;
+  color: #27ae60;
+}
+
+/* Mobile Responsive Signature Styles */
+@media (max-width: 768px) {
+  .signature-container {
+    padding: 15px;
+    margin: 15px 0;
+  }
+
+  .signature-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .signature-tools,
+  .signature-actions {
+    justify-content: center;
+  }
+
+  .signature-btn {
+    font-size: 0.85rem;
+    padding: 10px 12px;
+  }
+
+  #signatureCanvas {
+    height: 200px !important;
+  }
+}
+
+/* Contract View Styles */
+.contract-paper {
+  background: #fff;
+  width: 210mm;
+  max-width: 210mm;
+  min-height: 297mm;
+  padding: 20mm;
+  margin: 0 auto;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  position: relative;
+  box-sizing: border-box;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1e293b;
+  direction: rtl;
+  text-align: right;
+  page-break-after: always;
+}
+
+.contract-header {
+  text-align: center;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.contract-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.top-left-fields {
+  position: absolute;
+  top: 0;
+  left: 0;
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.contract-section {
+  margin-bottom: 15px;
+  page-break-inside: avoid;
+}
+
+.terms-box {
+  border: 0px solid #ccc;
+  padding: 10px;
+  margin: 15px 0;
+  font-size: 12px;
+  min-height: 100px;
+  page-break-inside: avoid;
+}
+
+.terms-box strong {
+  text-decoration: underline;
+}
+
+.signature-section {
+  page-break-inside: avoid;
+  margin-top: 50px;
+}
+
+@media print {
+
+  /* Hide everything except contract */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only doc-content */
+  #doc-wrapper,
+  #doc-wrapper *,
+  #doc-content,
+  #doc-content * {
+    visibility: visible;
+  }
+
+  /* Print setup */
+  body {
+    background: white;
+    height: auto;
+    overflow: visible;
+  }
+
+  #viewContractModal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
+    display: block !important;
+  }
+
+  /* Hide header in print */
+  #viewContractModal>div>div:first-child {
+    display: none !important;
+  }
+
+  #doc-wrapper {
+    padding: 0;
+    overflow: visible;
+    display: block;
+  }
+
+  #doc-content {
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: auto;
+    background: white !important;
+    background-image: none !important;
+  }
+
+  .contract-section {
+    page-break-inside: avoid;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+}

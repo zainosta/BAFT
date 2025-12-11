@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>توقيع العقد إلكترونياً</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #f8f9fc;
+      --text: #1e293b;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    header {
+      background: #fff;
+      padding: 12px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      z-index: 10;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    #main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #doc-wrapper {
+      flex: 1;
+      background: #ffffff;
+      /* Light gray instead of dark gray */
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+    }
+
+    #doc-content {
+      background: #fff;
+      width: 210mm;
+      min-height: 296.5mm;
+      padding: 20mm;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      position: relative;
+      box-sizing: border-box;
+      font-size: 14px;
+      line-height: 1.6;
+      display: block;
+
+      /* Add repeating page effect */
+      background-image:
+        linear-gradient(to bottom,
+          transparent 0mm,
+          transparent 297mm,
+          rgba(0, 0, 0, 0.05) 297mm,
+          rgba(0, 0, 0, 0.05) 297.5mm,
+          transparent 297.5mm);
+      background-size: 100% 297mm;
+      background-repeat: repeat-y;
+    }
+
+    #pdf-canvas-container {
+      position: relative;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      display: none;
+    }
+
+    canvas.pdf-page {
+      display: block;
+      background: #fff;
+    }
+
+    .contract-header {
+      text-align: center;
+      /* border-bottom: 2px solid #000; */
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .contract-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .top-left-fields {
+      position: absolute;
+      top: 0;
+      left: 0;
+      text-align: left;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .contract-section {
+      margin-bottom: 15px;
+      page-break-inside: avoid;
+    }
+
+    .contract-label {
+      font-weight: bold;
+      display: inline-block;
+      width: 120px;
+    }
+
+    .contract-value {
+      border-bottom: 1px dotted #999;
+      padding: 0 5px;
+    }
+
+    .terms-box {
+      border: 0px solid #ccc;
+      padding: 10px;
+      margin: 15px 0;
+      /* white-space: pre-wrap; */
+      font-size: 12px;
+      min-height: 100px;
+      page-break-inside: auto;
+    }
+
+    .terms-box strong {
+      text-decoration: underline;
+    }
+
+    .signature-section {
+      page-break-before: auto;
+      margin-top: 50px;
+    }
+
+    #signature-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    .draggable-signature {
+      position: absolute;
+      cursor: move;
+      border: 2px dashed transparent;
+      pointer-events: auto;
+      max-width: 200px;
+      resize: both;
+      overflow: hidden;
+    }
+
+    .draggable-signature img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .draggable-signature:hover,
+    .draggable-signature.active {
+      border-color: var(--primary);
+      background: rgba(37, 99, 235, 0.1);
+    }
+
+    .delete-sig {
+      position: absolute;
+      bottom: -10px;
+      left: -10px;
+      background: red;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      line-height: 20px;
+      cursor: pointer;
+      display: none;
+      font-size: 12px;
+    }
+
+    .draggable-signature:hover .delete-sig {
+      display: block;
+    }
+
+    #sidebar {
+      width: 320px;
+      background: #fff;
+      border-left: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      z-index: 20;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .sidebar-content {
+      padding: 20px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .sidebar-footer {
+      padding: 20px;
+      border-top: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+
+    .tool-btn {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .tool-btn:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+
+    .tool-btn.primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
+    .tool-btn.primary:hover {
+      background: #1d4ed8;
+    }
+
+    #sig-pad-container {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      margin-bottom: 15px;
+      touch-action: none;
+    }
+
+    canvas#sig-pad {
+      width: 100%;
+      height: 160px;
+      border-radius: 8px;
+      cursor: crosshair;
+    }
+
+    .tabs {
+      display: flex;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      color: #64748b;
+    }
+
+    .tab.active {
+      border-bottom-color: var(--primary);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.9);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e2e8f0;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .attachments-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .attachments-section h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    .attachment-field {
+      margin-bottom: 15px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .attachment-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .attachment-toggle {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 5px 10px;
+      font-size: 11px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #64748b;
+    }
+
+    .toggle-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .attachment-input-text {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 13px;
+    }
+
+    .attachment-input-file {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .file-preview {
+      margin-top: 8px;
+      max-width: 100%;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      padding: 8px;
+      background: white;
+    }
+
+    .file-preview img {
+      max-width: 100%;
+      max-height: 150px;
+      display: block;
+      border-radius: 4px;
+    }
+
+    .file-info {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: white;
+        height: auto;
+        overflow: visible;
+      }
+
+      header,
+      #sidebar,
+      #loading {
+        display: none !important;
+      }
+
+      #main-container {
+        display: block;
+        overflow: visible;
+      }
+
+      #doc-wrapper {
+        padding: 0;
+        overflow: visible;
+        display: block;
+      }
+
+      #doc-content {
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        min-height: auto;
+        background: white;
+      }
+
+      .contract-section {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+  <!-- html2pdf.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- pdf-lib -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <!-- pdf.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+</head>
+
+<body>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p style="margin-top:10px">جاري تحميل العقد...</p>
+  </div>
+
+  <header>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img src="logo.jpg" alt="Logo" style="height:32px;">
+      <h2>توقيع العقد</h2>
+    </div>
+    <div id="contract-info" style="font-size:14px;color:#64748b;"></div>
+  </header>
+
+  <div id="main-container">
+    <div id="doc-wrapper">
+      <!-- Mode 1: HTML Contract -->
+      <div id="doc-content">
+        <div class="contract-header">
+          <div class="top-left-fields">
+            <div> <span id="c-date-top"></span></div>
+            <div>محصل / <span id="c-collector"></span></div>
+            <div>مسوق / <span id="c-manager"></span></div>
+            <div>رقم العقد: <span id="c-id-top"></span></div>
+
+          </div>
+          <div class="contract-title">عقد خدمات نظافة</div>
+          <div>رقم العقد: <span id="c-id"></span></div>
+        </div>
+
+        <!-- <div class="contract-section">
+          <p><strong>الطرف الأول:</strong> <span id="c-first-party">شركة بفت للمقاولات</span></p>
+          <p><strong>الطرف الثاني:</strong> <span id="c-client"></span></p>
+          <p><strong>الجوال:</strong> <span id="c-phone"></span></p>
+        </div> -->
+
+        <!-- <div class="contract-section">
+          <p>اتفق الطرفان على تقديم خدمات النظافة وفقاً للتفاصيل التالية:</p>
+          <p><span class="contract-label">نوع الخدمة:</span> <span id="c-service"></span></p>
+          <p><span class="contract-label">مدة العقد:</span> <span id="c-duration"></span></p>
+          <p><span class="contract-label">بداية العقد:</span> <span id="c-start"></span></p>
+          <p><span class="contract-label">نهاية العقد:</span> <span id="c-end"></span></p>
+          <p><span class="contract-label">القيمة الإجمالية:</span> <span id="c-price"></span> ريال</p>
+          <p><span class="contract-label">طريقة الدفع:</span> <span id="c-payment"></span></p>
+          <p><span class="contract-label">الموقع:</span> <span id="c-location"></span></p>
+        </div> -->
+
+        <div class="contract-section">
+          <!-- <strong>الشروط والأحكام:</strong> -->
+          <div class="terms-box" id="c-terms"></div>
+        </div>
+
+        <div class="contract-section signature-section" style="display: flex; justify-content: space-between;">
+          <div style="text-align: center; width: 200px;">
+            <p><strong>الطرف الأول</strong></p>
+            <p>شركة بفت للمقاولات</p>
+            <br><br>
+            <!-- <p>__________________</p> -->
+          </div>
+          <div style="text-align: center; width: 200px;">
+            <p><strong>الطرف الثاني</strong></p>
+            <p id="c-second-party-name"></p>
+            <!-- Signature goes here -->
+            <div id="signature-target"
+              style="height: 80px; border: 1px dashed #ccc; margin-top: 10px; display:flex; align-items:center; justify-content:center; color:#999; font-size:12px;">
+              ضع التوقيع هنا
+            </div>
+          </div>
+        </div>
+        <!-- Signature Layer Overlay for HTML -->
+        <div id="signature-layer-html" class="sig-layer"
+          style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;"></div>
+      </div>
+
+      <!-- Mode 2: Uploaded PDF -->
+      <div id="pdf-canvas-container">
+        <canvas id="the-canvas" class="pdf-page"></canvas>
+        <!-- Signature Layer Overlay for PDF -->
+        <div id="signature-layer-pdf" class="sig-layer"
+          style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;"></div>
+      </div>
+    </div>
+
+    <div id="sidebar">
+      <div class="sidebar-content">
+        <!-- Mode Switcher -->
+        <div style="margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid #e2e8f0;">
+          <label style="font-size:13px;font-weight:bold;display:block;margin-bottom:8px;">نوع العقد:</label>
+          <select id="contractMode" onchange="switchContractMode(this.value)"
+            style="width:100%;padding:8px;border-radius:4px;border:1px solid #cbd5e1;">
+            <option value="html">العقد الإلكتروني (تلقائي)</option>
+            <option value="pdf">رفع ملف PDF خارجي</option>
+          </select>
+        </div>
+
+        <div id="uploadPdfSection" class="hidden" style="margin-bottom:20px;">
+          <input type="file" id="pdf-upload" accept="application/pdf" style="width:100%;"
+            onchange="handlePdfUpload(this)">
+          <p style="font-size:11px;color:#64748b;margin-top:5px;">اختر ملف PDF لتوقيعه.</p>
+        </div>
+
+        <h3>إضافة توقيع</h3>
+        <p style="font-size:13px;color:#64748b;margin-bottom:15px;">ارسم توقيعك ثم اضغط "إدراج" لسحبه إلى مكان
+          التوقيع.</p>
+
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('draw')">رسم</div>
+          <div class="tab" onclick="switchTab('upload')">رفع صورة</div>
+        </div>
+
+        <div id="tab-draw">
+          <div id="sig-pad-container">
+            <canvas id="sig-pad" width="280" height="160"></canvas>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:15px;">
+            <button class="tool-btn" onclick="clearPad()" style="flex:1">مسح</button>
+            <button class="tool-btn primary" onclick="addSignatureFromPad()" style="flex:1">إدراج في
+              العقد</button>
+          </div>
+        </div>
+
+        <div id="tab-upload" class="hidden">
+          <input type="file" id="sig-upload" accept="image/*" style="width:100%;margin-bottom:15px;">
+          <button class="tool-btn primary" onclick="addSignatureFromUpload()">إدراج الصورة</button>
+        </div>
+
+        <hr style="border:0;border-top:1px solid #e2e8f0;margin:20px 0;">
+
+        <div id="instructions" style="font-size:13px;color:#64748b;background:#f1f5f9;padding:10px;border-radius:6px;">
+          <strong>التعليمات:</strong>
+          <ol style="padding-right:20px;margin:5px 0;">
+            <li>ارسم توقيعك.</li>
+            <li>اضغط "إدراج".</li>
+            <li>اسحب التوقيع إلى مكان التوقيع.</li>
+            <li>اضغط "اعتماد التوقيع وإنهاء".</li>
+          </ol>
+        </div>
+        <!-- Contract Attachments Section -->
+        <!-- Insert this code in pdf-sign.html after the instructions div and before the closing </div> of sidebar-content -->
+        <div class="attachments-section">
+          <h3>مرفقات العقد</h3>
+          <p style="font-size:12px;color:#64748b;margin-bottom:15px;">يمكنك إدخال البيانات كنص أو رفع صورة (اختياري)</p>
+
+          <!-- License Photo -->
+          <div class="attachment-field">
+            <label class="attachment-label">صورة الرخصة</label>
+            <div class="attachment-toggle">
+              <button class="toggle-btn active" onclick="toggleAttachmentType('license_photo', 'text')">نص</button>
+              <button class="toggle-btn" onclick="toggleAttachmentType('license_photo', 'image')">صورة</button>
+            </div>
+            <input type="text" class="attachment-input-text" id="license_photo_text"
+              placeholder="أدخل رقم الرخصة أو الوصف">
+            <input type="file" class="attachment-input-file hidden" id="license_photo_image"
+              accept="image/*,application/pdf" onchange="previewFile('license_photo')">
+            <div id="license_photo_preview" class="file-preview hidden"></div>
+          </div>
+
+          <!-- Container Location -->
+          <div class="attachment-field">
+            <label class="attachment-label">موقع الحاوية</label>
+            <div class="attachment-toggle">
+              <button class="toggle-btn active"
+                onclick="toggleAttachmentType('container_location_doc', 'text')">نص</button>
+              <button class="toggle-btn" onclick="toggleAttachmentType('container_location_doc', 'image')">صورة</button>
+            </div>
+            <input type="text" class="attachment-input-text" id="container_location_doc_text"
+              placeholder="أدخل موقع الحاوية">
+            <input type="file" class="attachment-input-file hidden" id="container_location_doc_image"
+              accept="image/*,application/pdf" onchange="previewFile('container_location_doc')">
+            <div id="container_location_doc_preview" class="file-preview hidden"></div>
+          </div>
+
+          <!-- Commercial Registration -->
+          <div class="attachment-field">
+            <label class="attachment-label">السجل التجاري</label>
+            <div class="attachment-toggle">
+              <button class="toggle-btn active"
+                onclick="toggleAttachmentType('commercial_registration', 'text')">نص</button>
+              <button class="toggle-btn"
+                onclick="toggleAttachmentType('commercial_registration', 'image')">صورة</button>
+            </div>
+            <input type="text" class="attachment-input-text" id="commercial_registration_text"
+              placeholder="أدخل رقم السجل التجاري">
+            <input type="file" class="attachment-input-file hidden" id="commercial_registration_image"
+              accept="image/*,application/pdf" onchange="previewFile('commercial_registration')">
+            <div id="commercial_registration_preview" class="file-preview hidden"></div>
+          </div>
+
+          <!-- Activity License -->
+          <div class="attachment-field">
+            <label class="attachment-label">رخصة النشاط</label>
+            <div class="attachment-toggle">
+              <button class="toggle-btn active" onclick="toggleAttachmentType('activity_license', 'text')">نص</button>
+              <button class="toggle-btn" onclick="toggleAttachmentType('activity_license', 'image')">صورة</button>
+            </div>
+            <input type="text" class="attachment-input-text" id="activity_license_text"
+              placeholder="أدخل رقم رخصة النشاط">
+            <input type="file" class="attachment-input-file hidden" id="activity_license_image"
+              accept="image/*,application/pdf" onchange="previewFile('activity_license')">
+            <div id="activity_license_preview" class="file-preview hidden"></div>
+          </div>
+
+          <!-- Tax Number -->
+          <div class="attachment-field">
+            <label class="attachment-label">الرقم الضريبي</label>
+            <div class="attachment-toggle">
+              <button class="toggle-btn active" onclick="toggleAttachmentType('tax_number', 'text')">نص</button>
+              <button class="toggle-btn" onclick="toggleAttachmentType('tax_number', 'image')">صورة</button>
+            </div>
+            <input type="text" class="attachment-input-text" id="tax_number_text" placeholder="أدخل الرقم الضريبي">
+            <input type="file" class="attachment-input-file hidden" id="tax_number_image"
+              accept="image/*,application/pdf" onchange="previewFile('tax_number')">
+            <div id="tax_number_preview" class="file-preview hidden"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="sidebar-footer" id="signingFooter">
+        <button class="tool-btn primary" id="finishBtn" onclick="finishSigning()">اعتماد التوقيع وإنهاء</button>
+      </div>
+
+      <!-- View Mode Actions (Hidden by default) -->
+      <div id="viewModeActions" class="hidden" style="padding: 20px;">
+        <h3 style="margin-top:0;">إجراءات</h3>
+        <button class="tool-btn" onclick="window.print()">
+          <span>🖨️</span> طباعة العقد
+        </button>
+        <button class="tool-btn" onclick="shareWhatsapp()">
+          <span>📱</span> مشاركة عبر واتساب
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Improved URL Parsing
+    function getUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      let id = params.get('id');
+      let token = params.get('token');
+      let mode = params.get('mode');
+
+      // Fallback: Try to parse from path /sign/:id/:token
+      if (!id || !token) {
+        const pathParts = window.location.pathname.split('/');
+        const signIndex = pathParts.indexOf('sign');
+        if (signIndex !== -1 && pathParts.length > signIndex + 2) {
+          id = pathParts[signIndex + 1];
+          token = pathParts[signIndex + 2];
+        }
+      }
+      return { id, token, mode };
+    }
+
+    const { id: contractId, token, mode: urlMode } = getUrlParams();
+    console.log('Parsed Params:', { contractId, token, urlMode });
+
+    let currentMode = 'html'; // 'html' or 'pdf'
+    let uploadedPdfBytes = null; // For PDF mode
+    let pdfDoc = null;
+    let pageNum = 1;
+    let scale = 1.5;
+    let canvas = document.getElementById('the-canvas');
+    let ctx = canvas.getContext('2d');
+
+    let sigPad = document.getElementById('sig-pad');
+    let sigCtx = sigPad.getContext('2d');
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    // Init
+    window.onload = async () => {
+      const loadingEl = document.getElementById('loading');
+      if (!contractId) {
+        alert('رابط غير صالح (مفقود رقم العقد)');
+        if (loadingEl) loadingEl.innerHTML = '<p style="color:red">رابط غير صالح</p>';
+        return;
+      }
+
+      setupDrawing();
+
+      try {
+        // Fetch Contract Data
+        const res = await fetch('/api/contracts?q=' + contractId, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (!res.ok) throw new Error('Server returned ' + res.status + ' ' + res.statusText);
+
+        const data = await res.json();
+        console.log('API Response:', data);
+
+        const contract = Array.isArray(data) ? data.find(c => c.id === contractId) : data;
+        if (!contract) throw new Error('العقد غير موجود');
+
+        console.log('Contract Object:', contract);
+
+        // Helper for safe DOM updates
+        const safeSet = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.innerText = val || '';
+          else console.warn('Missing element:', id);
+        };
+
+        // Helper to format terms with underlined names
+        const formatTerms = (termsText) => {
+          if (!termsText) return '';
+          // Match patterns like "البند الأول:" or "البند الثاني:" etc.
+          // This regex finds "البند" followed by any text until a colon
+          return termsText.replace(/(البند[^:]+:)/g, '<strong>$1</strong>');
+        };
+
+        // Populate HTML Fields
+        safeSet('c-id', contract.id || contract.contract_number || '---');
+        // safeSet('c-date', new Date().toLocaleDateString('ar-SA'));
+        safeSet('c-first-party', contract.first_party || 'شركة بفت للمقاولات');
+        safeSet('c-client', contract.client_name);
+        safeSet('c-phone', contract.client_phone);
+        safeSet('c-service', contract.service_name);
+        safeSet('c-duration', contract.duration || 'سنوي');
+        safeSet('c-start', contract.from_date || '-');
+        safeSet('c-end', contract.to_date || '-');
+        safeSet('c-price', contract.total_price || '0');
+        safeSet('c-payment', contract.payment_type || 'سنوية');
+        safeSet('c-location', (contract.city || '') + ' - ' + (contract.district || '') + ' - ' + (contract.location || ''));
+
+        // Format and set terms with underlined names
+        const termsEl = document.getElementById('c-terms');
+        if (termsEl) termsEl.innerHTML = formatTerms(contract.terms);
+        safeSet('c-second-party-name', contract.second_party || contract.client_name);
+        safeSet('c-collector', contract.collector || '...................');
+        safeSet('c-manager', contract.manager || '...................');
+
+        // Populate top-left fields (duplicates)
+        // safeSet('c-date-top', new Date().toLocaleDateString('ar-SA'));
+        safeSet('c-date-top', new Date().toISOString().split('T')[0]);
+        safeSet('c-id-top', contract.id || contract.contract_number || '---');
+
+
+        if (loadingEl) loadingEl.style.display = 'none';
+        const infoEl = document.getElementById('contract-info');
+        if (infoEl) infoEl.innerText = 'عقد رقم: ' + contractId;
+
+        // Handle View Mode
+        if (urlMode === 'view') {
+          setupViewMode();
+        }
+
+      } catch (err) {
+        console.error('CRITICAL ERROR:', err);
+        alert('خطأ في تحميل بيانات العقد: ' + err.message);
+        if (loadingEl) loadingEl.innerHTML = '<p style="color:red;direction:ltr;text-align:center">' + err.message + '</p>';
+      }
+    };
+
+    // --- Mode Switching ---
+    function switchContractMode(mode) {
+      currentMode = mode;
+      if (mode === 'html') {
+        document.getElementById('doc-content').style.display = 'block';
+        document.getElementById('pdf-canvas-container').style.display = 'none';
+        document.getElementById('uploadPdfSection').classList.add('hidden');
+      } else {
+        document.getElementById('doc-content').style.display = 'none';
+        document.getElementById('pdf-canvas-container').style.display = 'block';
+        document.getElementById('uploadPdfSection').classList.remove('hidden');
+      }
+      document.getElementById('signature-layer-html').innerHTML = '';
+      document.getElementById('signature-layer-pdf').innerHTML = '';
+    }
+
+    // --- PDF Upload & Rendering ---
+    async function handlePdfUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function (e) {
+        try {
+          uploadedPdfBytes = new Uint8Array(e.target.result);
+          // Validate PDF Header (Relaxed)
+          const headerBytes = uploadedPdfBytes.slice(0, 1024);
+          const headerStr = new TextDecoder().decode(headerBytes);
+          if (!headerStr.includes('%PDF-')) {
+            alert('الملف المرفق ليس ملف PDF صالح (Header missing).');
+            uploadedPdfBytes = null;
+            return;
+          }
+
+          // Render first page using pdf.js
+          const loadingTask = pdfjsLib.getDocument({ data: uploadedPdfBytes });
+          pdfDoc = await loadingTask.promise;
+          const page = await pdfDoc.getPage(1);
+          const viewport = page.getViewport({ scale: scale });
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          // Resize overlay
+          const layer = document.getElementById('signature-layer-pdf');
+          layer.style.width = viewport.width + 'px';
+          layer.style.height = viewport.height + 'px';
+
+          const renderContext = {
+            canvasContext: ctx,
+            viewport: viewport
+          };
+          await page.render(renderContext).promise;
+        } catch (err) {
+          console.error(err);
+          alert('خطأ في قراءة ملف PDF: ' + err.message);
+          uploadedPdfBytes = null;
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // --- Drawing Logic ---
+    function setupDrawing() {
+      sigPad.addEventListener('mousedown', startDrawing);
+      sigPad.addEventListener('mousemove', draw);
+      sigPad.addEventListener('mouseup', stopDrawing);
+      sigPad.addEventListener('mouseout', stopDrawing);
+      sigPad.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e.touches[0]); });
+      sigPad.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
+      sigPad.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); });
+    }
+
+    function getPos(e) {
+      const rect = sigPad.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const pos = getPos(e);
+      lastX = pos.x;
+      lastY = pos.y;
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const pos = getPos(e);
+      sigCtx.beginPath();
+      sigCtx.moveTo(lastX, lastY);
+      sigCtx.lineTo(pos.x, pos.y);
+      sigCtx.strokeStyle = '#000';
+      sigCtx.lineWidth = 2;
+      sigCtx.lineCap = 'round';
+      sigCtx.stroke();
+      lastX = pos.x;
+      lastY = pos.y;
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    function clearPad() {
+      sigCtx.clearRect(0, 0, sigPad.width, sigPad.height);
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector('.tab[onclick="switchTab(\'' + tab + '\')"]').classList.add('active');
+      if (tab === 'draw') {
+        document.getElementById('tab-draw').classList.remove('hidden');
+        document.getElementById('tab-upload').classList.add('hidden');
+      } else {
+        document.getElementById('tab-draw').classList.add('hidden');
+        document.getElementById('tab-upload').classList.remove('hidden');
+      }
+    }
+
+    // --- Signature Placement ---
+    function addSignatureFromPad() {
+      const dataUrl = sigPad.toDataURL('image/png');
+      createDraggableSignature(dataUrl);
+    }
+
+    function addSignatureFromUpload() {
+      const file = document.getElementById('sig-upload').files[0];
+      if (!file) return alert('الرجاء اختيار صورة');
+      const reader = new FileReader();
+      reader.onload = (e) => createDraggableSignature(e.target.result);
+      reader.readAsDataURL(file);
+    }
+
+    function createDraggableSignature(src) {
+      const layerId = currentMode === 'html' ? 'signature-layer-html' : 'signature-layer-pdf';
+      const layer = document.getElementById(layerId);
+      layer.innerHTML = ''; // Clear previous
+      const div = document.createElement('div');
+      div.className = 'draggable-signature';
+      div.style.left = '50px';
+      div.style.top = '50px';
+
+      const img = document.createElement('img');
+      img.src = src;
+      img.style.width = '150px';
+      img.style.pointerEvents = 'none';
+
+      const del = document.createElement('div');
+      del.className = 'delete-sig';
+      del.innerHTML = '×';
+      del.onclick = () => div.remove();
+
+      div.appendChild(img);
+      div.appendChild(del);
+      layer.appendChild(div);
+      makeDraggable(div);
+    }
+
+    function makeDraggable(elmnt) {
+      let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      elmnt.onmousedown = dragMouseDown;
+      elmnt.ontouchstart = dragMouseDown;
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        if (e.type === 'touchstart') {
+          pos3 = e.touches[0].clientX;
+          pos4 = e.touches[0].clientY;
+        } else {
+          pos3 = e.clientX;
+          pos4 = e.clientY;
+        }
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+        document.ontouchend = closeDragElement;
+        document.ontouchmove = elementDrag;
+        elmnt.classList.add('active');
+      }
+
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        let clientX, clientY;
+        if (e.type === 'touchmove') {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+        pos1 = pos3 - clientX;
+        pos2 = pos4 - clientY;
+        pos3 = clientX;
+        pos4 = clientY;
+
+        // Use top positioning for easier dragging
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+      }
+
+      function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+        document.ontouchend = null;
+        document.ontouchmove = null;
+        elmnt.classList.remove('active');
+      }
+    }
+
+    async function finishSigning() {
+      console.log('Current Mode:', currentMode);
+      const layerId = currentMode === 'html' ? 'signature-layer-html' : 'signature-layer-pdf';
+      const sigDiv = document.querySelector('#' + layerId + ' .draggable-signature');
+      if (!sigDiv) return alert('الرجاء إدراج التوقيع');
+
+      const btn = document.getElementById('finishBtn');
+      btn.disabled = true;
+      btn.innerText = 'جاري المعالجة...';
+
+      try {
+        let base64data;
+        if (currentMode === 'html') {
+          // Hide the signature placeholder before generating PDF
+          const signatureTarget = document.getElementById('signature-target');
+          if (signatureTarget) signatureTarget.style.display = 'none';
+          const element = document.getElementById('doc-content');
+          const opt = {
+            margin: 0,
+            filename: 'contract_' + contractId + '.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          };
+          const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
+          base64data = await blobToBase64(pdfBlob);
+        } else {
+          if (!uploadedPdfBytes) throw new Error('لم يتم رفع ملف PDF أو الملف غير صالح');
+
+          console.log('PDF Bytes Length:', uploadedPdfBytes.length);
+          const header = new TextDecoder().decode(uploadedPdfBytes.slice(0, 20));
+          console.log('PDF Header:', header);
+
+          const { PDFDocument } = PDFLib;
+          let pdfDoc;
+          try {
+            pdfDoc = await PDFDocument.load(uploadedPdfBytes, { ignoreEncryption: true });
+          } catch (loadErr) {
+            console.error('PDF Load Error:', loadErr);
+            throw new Error('فشل في قراءة ملف PDF. تأكد من أن الملف غير تالف وغير محمي بكلمة مرور.');
+          }
+
+          const pages = pdfDoc.getPages();
+          const firstPage = pages[0];
+          const { width, height } = firstPage.getSize();
+
+          // Calculate signature position
+          const layer = document.getElementById('signature-layer-pdf');
+          const layerRect = layer.getBoundingClientRect();
+          const sigRect = sigDiv.getBoundingClientRect();
+
+          const xRatio = (sigRect.left - layerRect.left) / layerRect.width;
+          const yRatio = (sigRect.top - layerRect.top) / layerRect.height;
+          const wRatio = sigRect.width / layerRect.width;
+          const hRatio = sigRect.height / layerRect.height;
+
+          const sigX = xRatio * width;
+          const sigY = height - (yRatio * height) - (hRatio * height);
+          const sigW = wRatio * width;
+          const sigH = hRatio * height;
+
+          const img = sigDiv.querySelector('img');
+          const pngImage = await pdfDoc.embedPng(img.src);
+
+          firstPage.drawImage(pngImage, {
+            x: sigX,
+            y: sigY,
+            width: sigW,
+            height: sigH,
+          });
+
+          const pdfBytes = await pdfDoc.save();
+          base64data = arrayBufferToBase64(pdfBytes);
+        }
+
+        // Upload
+        btn.innerText = 'جاري الحفظ...';
+        const res = await fetch('/api/contracts/' + contractId + '/sign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdfBase64: base64data })
+        });
+
+        if (!res.ok) throw new Error('Upload failed');
+        // Upload attachments
+        btn.innerText = 'جاري حفظ المرفقات...';
+        const attachmentResult = await uploadAttachments(contractId);
+        if (!attachmentResult.success) {
+          console.warn('Attachment upload warning:', attachmentResult.error);
+        }
+        alert('تم توقيع العقد بنجاح!');
+        document.body.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;font-family:Arial,sans-serif">
+                    <h2 style="color:#10b981;margin-bottom:20px">✅ تم التوقيع بنجاح</h2>
+                    <p style="margin-bottom:30px;color:#64748b">تم حفظ العقد الموقع بنجاح</p>
+                    <a href="/api/contracts/${contractId}/download" 
+                       style="background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-bottom:15px">
+                        📥 تحميل العقد الموقع
+                    </a>
+                    <p style="color:#94a3b8;font-size:14px;margin-top:20px">يمكنك إغلاق هذه الصفحة بعد التحميل</p>
+                </div>
+                `;
+      } catch (err) {
+        console.error(err);
+        alert('فشل العملية: ' + err.message);
+        btn.disabled = false;
+        btn.innerText = 'اعتماد التوقيع وإنهاء';
+      }
+    }
+
+    function blobToBase64(blob) {
+      return new Promise((resolve, _) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+
+      img.style.width = '150px';
+      img.style.pointerEvents = 'none';
+
+      const del = document.createElement('div');
+      del.className = 'delete-sig';
+      del.innerHTML = '×';
+      del.onclick = () => div.remove();
+
+      div.appendChild(img);
+      div.appendChild(del);
+      layer.appendChild(div);
+      makeDraggable(div);
+    }
+
+    function makeDraggable(elmnt) {
+      let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      elmnt.onmousedown = dragMouseDown;
+      elmnt.ontouchstart = dragMouseDown;
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        if (e.type === 'touchstart') {
+          pos3 = e.touches[0].clientX;
+          pos4 = e.touches[0].clientY;
+        } else {
+          pos3 = e.clientX;
+          pos4 = e.clientY;
+        }
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+        document.ontouchend = closeDragElement;
+        document.ontouchmove = elementDrag;
+        elmnt.classList.add('active');
+      }
+
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        let clientX, clientY;
+        if (e.type === 'touchmove') {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+        pos1 = pos3 - clientX;
+        pos2 = pos4 - clientY;
+        pos3 = clientX;
+        pos4 = clientY;
+
+        // Use top positioning for easier dragging
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+      }
+
+      function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+        document.ontouchend = null;
+        document.ontouchmove = null;
+        elmnt.classList.remove('active');
+      }
+    }
+
+    async function finishSigning() {
+      console.log('Current Mode:', currentMode);
+      const layerId = currentMode === 'html' ? 'signature-layer-html' : 'signature-layer-pdf';
+      const sigDiv = document.querySelector('#' + layerId + ' .draggable-signature');
+      if (!sigDiv) return alert('الرجاء إدراج التوقيع');
+
+      const btn = document.getElementById('finishBtn');
+      btn.disabled = true;
+      btn.innerText = 'جاري المعالجة...';
+
+      try {
+        let base64data;
+        if (currentMode === 'html') {
+          // Hide the signature placeholder before generating PDF
+          const signatureTarget = document.getElementById('signature-target');
+          if (signatureTarget) signatureTarget.style.display = 'none';
+          const element = document.getElementById('doc-content');
+          const opt = {
+            margin: 0,
+            filename: 'contract_' + contractId + '.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          };
+          const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
+          base64data = await blobToBase64(pdfBlob);
+        } else {
+          if (!uploadedPdfBytes) throw new Error('لم يتم رفع ملف PDF أو الملف غير صالح');
+
+          console.log('PDF Bytes Length:', uploadedPdfBytes.length);
+          const header = new TextDecoder().decode(uploadedPdfBytes.slice(0, 20));
+          console.log('PDF Header:', header);
+
+          const { PDFDocument } = PDFLib;
+          let pdfDoc;
+          try {
+            pdfDoc = await PDFDocument.load(uploadedPdfBytes, { ignoreEncryption: true });
+          } catch (loadErr) {
+            console.error('PDF Load Error:', loadErr);
+            throw new Error('فشل في قراءة ملف PDF. تأكد من أن الملف غير تالف وغير محمي بكلمة مرور.');
+          }
+
+          const pages = pdfDoc.getPages();
+          const firstPage = pages[0];
+          const { width, height } = firstPage.getSize();
+
+          // Calculate signature position
+          const layer = document.getElementById('signature-layer-pdf');
+          const layerRect = layer.getBoundingClientRect();
+          const sigRect = sigDiv.getBoundingClientRect();
+
+          const xRatio = (sigRect.left - layerRect.left) / layerRect.width;
+          const yRatio = (sigRect.top - layerRect.top) / layerRect.height;
+          const wRatio = sigRect.width / layerRect.width;
+          const hRatio = sigRect.height / layerRect.height;
+
+          const sigX = xRatio * width;
+          const sigY = height - (yRatio * height) - (hRatio * height);
+          const sigW = wRatio * width;
+          const sigH = hRatio * height;
+
+          const img = sigDiv.querySelector('img');
+          const pngImage = await pdfDoc.embedPng(img.src);
+
+          firstPage.drawImage(pngImage, {
+            x: sigX,
+            y: sigY,
+            width: sigW,
+            height: sigH,
+          });
+
+          const pdfBytes = await pdfDoc.save();
+          base64data = arrayBufferToBase64(pdfBytes);
+        }
+
+        // Upload
+        btn.innerText = 'جاري الحفظ...';
+        const res = await fetch('/api/contracts/' + contractId + '/sign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdfBase64: base64data })
+        });
+
+        if (!res.ok) throw new Error('Upload failed');
+        // Upload attachments
+        btn.innerText = 'جاري حفظ المرفقات...';
+        const attachmentResult = await uploadAttachments(contractId);
+        if (!attachmentResult.success) {
+          console.warn('Attachment upload warning:', attachmentResult.error);
+        }
+        alert('تم توقيع العقد بنجاح!');
+        document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;font-family:Arial,sans-serif" >
+          <h2 style="color:#10b981;margin-bottom:20px">✅ تم التوقيع بنجاح</h2>
+          <p style="margin-bottom:30px;color:#64748b">تم حفظ العقد الموقع بنجاح</p>
+          <a href="/api/contracts/${contractId}/download" 
+          style="background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-bottom:15px">
+          📥 تحميل العقد الموقع
+          </a>
+          <p style="color:#94a3b8;font-size:14px;margin-top:20px">يمكنك إغلاق هذه الصفحة بعد التحميل</p>
+          </div >`;
+      } catch (err) {
+        console.error(err);
+        alert('فشل العملية: ' + err.message);
+        document.body.innerHTML = `
+        <div style ="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;font-family:Arial,sans-serif" >
+          <h2 style="color:#10b981;margin-bottom:20px">✅ تم التوقيع بنجاح</h2>
+          <p style="margin-bottom:30px;color:#64748b">تم حفظ العقد الموقع بنجاح</p>
+          <a href="/api/contracts/${contractId}/download" 
+          style="background:#3b82f6;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-bottom:15px">📥 تحميل العقد الموقع</a>
+          <p style="color:#94a3b8;font-size:14px;margin-top:20px">يمكنك إغلاق هذه الصفحة بعد التحميل</p>
+        </div >`;
+      }
+    }
+
+    function blobToBase64(blob) {
+      return new Promise((resolve, _) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    function arrayBufferToBase64(buffer) {
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      const len = bytes.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return 'data:application/pdf;base64,' + window.btoa(binary);
+    }
+
+    // Contract Attachments Handler
+    // Global attachment data storage
+    const attachmentData = {
+      license_photo: { type: 'text', value: null },
+      container_location_doc: { type: 'text', value: null },
+      commercial_registration: { type: 'text', value: null },
+      activity_license: { type: 'text', value: null },
+      tax_number: { type: 'text', value: null }
+    };
+
+    // Toggle between text and image input for an attachment field
+    function toggleAttachmentType(fieldName, type) {
+      // Update active button
+      const buttons = document.querySelectorAll(`[onclick *= "'${fieldName}'"]`);
+      buttons.forEach(btn => {
+        if (btn.textContent.includes('نص') && type === 'text') {
+          btn.classList.add('active');
+        } else if (btn.textContent.includes('صورة') && type === 'image') {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // Show/hide appropriate input
+      const textInput = document.getElementById(`${fieldName}_text`);
+      const fileInput = document.getElementById(`${fieldName}_image`);
+      const preview = document.getElementById(`${fieldName}_preview`);
+
+      if (type === 'text') {
+        textInput.classList.remove('hidden');
+        fileInput.classList.add('hidden');
+        preview.classList.add('hidden');
+        attachmentData[fieldName].type = 'text';
+      } else {
+        textInput.classList.add('hidden');
+        fileInput.classList.remove('hidden');
+        attachmentData[fieldName].type = 'image';
+      }
+    }
+
+    // Preview uploaded file
+    function previewFile(fieldName) {
+      const fileInput = document.getElementById(`${fieldName}_image`);
+      const preview = document.getElementById(`${fieldName}_preview`);
+      const file = fileInput.files[0];
+
+      if (!file) return;
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('حجم الملف كبير جداً. الحد الأقصى 5 ميجابايت');
+        fileInput.value = '';
+        return;
+      }
+
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
+      if (!validTypes.includes(file.type)) {
+        alert('نوع الملف غير مدعوم. يرجى رفع صورة أو PDF');
+        fileInput.value = '';
+        return;
+      }
+
+      // Force type to image since user selected a file
+      attachmentData[fieldName].type = 'image';
+
+      // Read and preview file
+      const fileReader = new FileReader();
+      fileReader.onload = function (e) {
+        preview.classList.remove('hidden');
+
+        if (file.type.startsWith('image/')) {
+          preview.innerHTML = `
+          < img src = "${e.target.result}" alt = "Preview" >
+            <div class="file-info">${file.name} (${(file.size / 1024).toFixed(2)} KB)</div>
+        `;
+        } else {
+          preview.innerHTML = `
+          < div class="file-info" >📄 ${file.name} (${(file.size / 1024).toFixed(2)} KB)</div >
+            `;
+        }
+
+        // Store file data
+        attachmentData[fieldName].value = e.target.result;
+      };
+      fileReader.readAsDataURL(file);
+    }
+
+    // Collect all attachment data
+    function collectAttachments() {
+      const attachments = [];
+      console.log('Collecting attachments from:', attachmentData);
+
+      for (const [fieldName, data] of Object.entries(attachmentData)) {
+        if (data.type === 'text') {
+          const textInput = document.getElementById(`${fieldName}_text`);
+          const textValue = textInput ? textInput.value.trim() : '';
+
+          if (textValue) {
+            attachments.push({
+              fieldName: fieldName,
+              fieldType: 'text',
+              textValue: textValue,
+              fileData: null
+            });
+          }
+        } else if (data.type === 'image') {
+          if (data.value) {
+            attachments.push({
+              fieldName: fieldName,
+              fieldType: 'image',
+              textValue: null,
+              fileData: data.value
+            });
+          }
+        }
+      }
+      console.log('Final attachments payload:', attachments);
+      return attachments;
+    }
+
+    function setupViewMode() {
+      const sidebarContent = document.querySelector('.sidebar-content');
+      if (sidebarContent) {
+        Array.from(sidebarContent.children).forEach(child => {
+          if (child.id !== 'viewModeActions') {
+            child.style.display = 'none';
+          }
+        });
+      }
+
+      const viewActions = document.getElementById('viewModeActions');
+      if (viewActions) viewActions.classList.remove('hidden');
+
+      const footer = document.getElementById('signingFooter');
+      if (footer) footer.style.display = 'none';
+    }
+
+    function shareWhatsapp() {
+      const text = `عقد نظافة رقم ${contractId}`;
+      const url = window.location.href.replace('mode=view', '');
+      const shareUrl = `https://wa.me/?text=${encodeURIComponent(text + '\n' + url)}`;
+      window.open(shareUrl, '_blank');
+    }
+
+    // Upload attachments to server
+    async function uploadAttachments(contractId) {
+      const attachments = collectAttachments();
+
+      // Skip if no attachments
+      if (attachments.length === 0) {
+        console.log('No attachments to upload');
+        return { success: true, message: 'No attachments' };
+      }
+
+      try {
+        const response = await fetch(`/api/contracts/${contractId}/attachments`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ attachmentsData: attachments })
+          });
+
+        if (!response.ok) {
+          throw new Error(`Failed to upload attachments: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('Attachments uploaded successfully:', result);
+        return { success: true, data: result };
+      } catch (error) {
+        console.error('Error uploading attachments:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
+
+  </script>
+</body>
+
+</html>

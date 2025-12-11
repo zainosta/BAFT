@@ -1,0 +1,76 @@
+<!-- Contract Attachments Section -->
+<!-- Insert this code in pdf-sign.html after the instructions div and before the closing </div> of sidebar-content -->
+
+<div class="attachments-section">
+    <h3>مرفقات العقد</h3>
+    <p style="font-size:12px;color:#64748b;margin-bottom:15px;">يمكنك إدخال البيانات كنص أو رفع صورة (اختياري)</p>
+
+    <!-- License Photo -->
+    <div class="attachment-field">
+        <label class="attachment-label">صورة الرخصة</label>
+        <div class="attachment-toggle">
+            <button class="toggle-btn active" onclick="toggleAttachmentType('license_photo', 'text')">نص</button>
+            <button class="toggle-btn" onclick="toggleAttachmentType('license_photo', 'image')">صورة</button>
+        </div>
+        <input type="text" class="attachment-input-text" id="license_photo_text" placeholder="أدخل رقم الرخصة أو الوصف">
+        <input type="file" class="attachment-input-file hidden" id="license_photo_image"
+            accept="image/*,application/pdf" onchange="previewFile('license_photo')">
+        <div id="license_photo_preview" class="file-preview hidden"></div>
+    </div>
+
+    <!-- Container Location -->
+    <div class="attachment-field">
+        <label class="attachment-label">موقع الحاوية</label>
+        <div class="attachment-toggle">
+            <button class="toggle-btn active"
+                onclick="toggleAttachmentType('container_location_doc', 'text')">نص</button>
+            <button class="toggle-btn" onclick="toggleAttachmentType('container_location_doc', 'image')">صورة</button>
+        </div>
+        <input type="text" class="attachment-input-text" id="container_location_doc_text"
+            placeholder="أدخل موقع الحاوية">
+        <input type="file" class="attachment-input-file hidden" id="container_location_doc_image"
+            accept="image/*,application/pdf" onchange="previewFile('container_location_doc')">
+        <div id="container_location_doc_preview" class="file-preview hidden"></div>
+    </div>
+
+    <!-- Commercial Registration -->
+    <div class="attachment-field">
+        <label class="attachment-label">السجل التجاري</label>
+        <div class="attachment-toggle">
+            <button class="toggle-btn active"
+                onclick="toggleAttachmentType('commercial_registration', 'text')">نص</button>
+            <button class="toggle-btn" onclick="toggleAttachmentType('commercial_registration', 'image')">صورة</button>
+        </div>
+        <input type="text" class="attachment-input-text" id="commercial_registration_text"
+            placeholder="أدخل رقم السجل التجاري">
+        <input type="file" class="attachment-input-file hidden" id="commercial_registration_image"
+            accept="image/*,application/pdf" onchange="previewFile('commercial_registration')">
+        <div id="commercial_registration_preview" class="file-preview hidden"></div>
+    </div>
+
+    <!-- Activity License -->
+    <div class="attachment-field">
+        <label class="attachment-label">رخصة النشاط</label>
+        <div class="attachment-toggle">
+            <button class="toggle-btn active" onclick="toggleAttachmentType('activity_license', 'text')">نص</button>
+            <button class="toggle-btn" onclick="toggleAttachmentType('activity_license', 'image')">صورة</button>
+        </div>
+        <input type="text" class="attachment-input-text" id="activity_license_text" placeholder="أدخل رقم رخصة النشاط">
+        <input type="file" class="attachment-input-file hidden" id="activity_license_image"
+            accept="image/*,application/pdf" onchange="previewFile('activity_license')">
+        <div id="activity_license_preview" class="file-preview hidden"></div>
+    </div>
+
+    <!-- Tax Number -->
+    <div class="attachment-field">
+        <label class="attachment-label">الرقم الضريبي</label>
+        <div class="attachment-toggle">
+            <button class="toggle-btn active" onclick="toggleAttachmentType('tax_number', 'text')">نص</button>
+            <button class="toggle-btn" onclick="toggleAttachmentType('tax_number', 'image')">صورة</button>
+        </div>
+        <input type="text" class="attachment-input-text" id="tax_number_text" placeholder="أدخل الرقم الضريبي">
+        <input type="file" class="attachment-input-file hidden" id="tax_number_image" accept="image/*,application/pdf"
+            onchange="previewFile('tax_number')">
+        <div id="tax_number_preview" class="file-preview hidden"></div>
+    </div>
+</div>
