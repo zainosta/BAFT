@@ -218,6 +218,7 @@ app.get('/api/contracts', authMiddleware, async (req, res) => {
     if (availableColumns.includes('client_phone')) cols.push('c.client_phone');
     if (availableColumns.includes('collector')) cols.push('c.collector');
     if (availableColumns.includes('tax')) cols.push('c.tax');
+    if (availableColumns.includes('parent_contract_id')) cols.push('c.parent_contract_id');
     let sql = `
     SELECT ${cols.join(', ')}
     FROM contracts c
@@ -232,12 +233,28 @@ app.get('/api/contracts', authMiddleware, async (req, res) => {
     }
 
     if (q) {
-        // Partial match on ID or Client Name
-        sql += ' AND (c.id LIKE ? OR cl.name LIKE ?)';
-        params.push(`%${q}%`, `%${q}%`);
+        // Enhanced partial match on ID, Client Name, or second_party (for client filtering)
+        if (availableColumns.includes('second_party')) {
+            sql += ' AND (c.id LIKE ? OR cl.name LIKE ? OR c.second_party LIKE ?)';
+            params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+        } else {
+            sql += ' AND (c.id LIKE ? OR cl.name LIKE ?)';
+            params.push(`%${q}%`, `%${q}%`);
+        }
     }
 
-    sql += ' ORDER BY c.created_at DESC LIMIT 100';
+    // Smart sorting: If searching by client name, sort alphabetically by client name first
+    // Otherwise sort by creation date
+    if (q && q.trim().length > 0) {
+        // When searching, prioritize alphabetical sorting by client name
+        sql += ' ORDER BY c.second_party ASC, c.created_at DESC LIMIT 500';
+    } else if (status) {
+        // When filtering by status only, sort by date
+        sql += ' ORDER BY c.created_at DESC LIMIT 100';
+    } else {
+        // Default: recent contracts first
+        sql += ' ORDER BY c.created_at DESC LIMIT 100';
+    }
 
     try {
         const [rows] = await pool.execute(sql, params);
@@ -281,7 +298,7 @@ app.post('/api/contracts', authMiddleware, async (req, res) => {
     ];
 
     // Add optional fields if they exist in DB
-    const optional = ['duration', 'payment_type', 'first_party', 'second_party', 'client_email', 'client_phone', 'collector', 'tax'];
+    const optional = ['duration', 'payment_type', 'first_party', 'second_party', 'client_email', 'client_phone', 'collector', 'tax', 'parent_contract_id'];
     optional.forEach(f => {
         if (availableColumns.includes(f)) {
             fields.push(f);
@@ -317,7 +334,7 @@ app.put('/api/contracts/:id', authMiddleware, async (req, res) => {
     ];
 
     // Add optional fields to allowed list if they exist
-    const optional = ['duration', 'payment_type', 'first_party', 'second_party', 'client_email', 'client_phone', 'collector', 'tax'];
+    const optional = ['duration', 'payment_type', 'first_party', 'second_party', 'client_email', 'client_phone', 'collector', 'tax', 'parent_contract_id'];
     optional.forEach(f => {
         if (availableColumns.includes(f)) allowed.push(f);
     });
@@ -339,6 +356,36 @@ app.put('/api/contracts/:id', authMiddleware, async (req, res) => {
         res.json({ message: 'Contract updated' });
     } catch (err) {
         console.error(err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// DELETE Contract
+app.delete('/api/contracts/:id', authMiddleware, async (req, res) => {
+    const id = req.params.id;
+
+    try {
+        // First delete related attachments
+        await pool.execute('DELETE FROM contract_attachments WHERE contract_id = ?', [id]);
+
+        // Then delete the contract
+        const [result] = await pool.execute('DELETE FROM contracts WHERE id = ?', [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Contract not found' });
+        }
+
+        // Delete uploaded files if they exist
+        const contractDir = path.join(__dirname, 'uploads', 'contracts', id);
+        if (fs.existsSync(contractDir)) {
+            fs.rmSync(contractDir, { recursive: true, force: true });
+            console.log(`Deleted contract directory: ${contractDir}`);
+        }
+
+        console.log(`✅ Contract ${id} deleted successfully`);
+        res.json({ message: 'Contract deleted successfully', id });
+    } catch (err) {
+        console.error('Delete contract error:', err);
         res.status(500).json({ message: err.message });
     }
 });
@@ -399,6 +446,227 @@ app.delete('/api/terms/:id', authMiddleware, async (req, res) => {
         await pool.execute('DELETE FROM terms WHERE id=?', [req.params.id]);
         res.json({ message: 'Deleted' });
     } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// --- Reports API ---
+
+// Get list of all collectors with statistics
+app.get('/api/reports/collectors', authMiddleware, async (req, res) => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT 
+                collector,
+                COUNT(*) as contract_count,
+                SUM(total_price) as total_value,
+                SUM(monthly_fee) as monthly_revenue,
+                AVG(total_price) as avg_contract_value,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_count
+            FROM contracts
+            WHERE collector IS NOT NULL AND collector != ''
+            GROUP BY collector
+            ORDER BY contract_count DESC
+        `);
+        res.json(rows);
+    } catch (err) {
+        console.error('Collectors report error:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Get detailed report for specific collector
+app.get('/api/reports/collectors/:name', authMiddleware, async (req, res) => {
+    try {
+        const collectorName = decodeURIComponent(req.params.name);
+
+        // Get statistics
+        const [stats] = await pool.execute(`
+            SELECT 
+                COUNT(*) as total_contracts,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_contracts,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_contracts,
+                SUM(CASE WHEN status = 'expired' THEN 1 ELSE 0 END) as expired_contracts,
+                SUM(total_price) as total_value,
+                SUM(monthly_fee) as monthly_revenue,
+                AVG(total_price) as avg_contract_value
+            FROM contracts
+            WHERE collector = ?
+        `, [collectorName]);
+
+        // Get all contracts
+        const cols = [
+            'c.id', 'c.client_id', 'cl.name as client_name', 'c.second_party',
+            'c.service_name', 'c.from_date', 'c.to_date', 'c.total_price',
+            'c.monthly_fee', 'c.manager', 'c.collector', 'c.status',
+            'c.city', 'c.district', 'c.container_type', 'c.client_phone'
+        ];
+        if (availableColumns.includes('duration')) cols.push('c.duration');
+        if (availableColumns.includes('payment_type')) cols.push('c.payment_type');
+        if (availableColumns.includes('tax')) cols.push('c.tax');
+
+        const [contracts] = await pool.execute(`
+            SELECT ${cols.join(', ')}
+            FROM contracts c
+            LEFT JOIN clients cl ON c.client_id = cl.id
+            WHERE c.collector = ?
+            ORDER BY c.created_at DESC
+        `, [collectorName]);
+
+        res.json({
+            entityName: collectorName,
+            entityType: 'collector',
+            statistics: stats[0],
+            contracts: contracts
+        });
+    } catch (err) {
+        console.error('Collector detail report error:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Get list of all marketers with statistics
+app.get('/api/reports/marketers', authMiddleware, async (req, res) => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT 
+                manager,
+                COUNT(*) as contract_count,
+                SUM(total_price) as total_value,
+                SUM(monthly_fee) as monthly_revenue,
+                AVG(total_price) as avg_contract_value,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_count
+            FROM contracts
+            WHERE manager IS NOT NULL AND manager != ''
+            GROUP BY manager
+            ORDER BY contract_count DESC
+        `);
+        res.json(rows);
+    } catch (err) {
+        console.error('Marketers report error:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Get detailed report for specific marketer
+app.get('/api/reports/marketers/:name', authMiddleware, async (req, res) => {
+    try {
+        const marketerName = decodeURIComponent(req.params.name);
+
+        // Get statistics
+        const [stats] = await pool.execute(`
+            SELECT 
+                COUNT(*) as total_contracts,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_contracts,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_contracts,
+                SUM(CASE WHEN status = 'expired' THEN 1 ELSE 0 END) as expired_contracts,
+                SUM(total_price) as total_value,
+                SUM(monthly_fee) as monthly_revenue,
+                AVG(total_price) as avg_contract_value
+            FROM contracts
+            WHERE manager = ?
+        `, [marketerName]);
+
+        // Get all contracts
+        const cols = [
+            'c.id', 'c.client_id', 'cl.name as client_name', 'c.second_party',
+            'c.service_name', 'c.from_date', 'c.to_date', 'c.total_price',
+            'c.monthly_fee', 'c.manager', 'c.collector', 'c.status',
+            'c.city', 'c.district', 'c.container_type', 'c.client_phone'
+        ];
+        if (availableColumns.includes('duration')) cols.push('c.duration');
+        if (availableColumns.includes('payment_type')) cols.push('c.payment_type');
+        if (availableColumns.includes('tax')) cols.push('c.tax');
+
+        const [contracts] = await pool.execute(`
+            SELECT ${cols.join(', ')}
+            FROM contracts c
+            LEFT JOIN clients cl ON c.client_id = cl.id
+            WHERE c.manager = ?
+            ORDER BY c.created_at DESC
+        `, [marketerName]);
+
+        res.json({
+            entityName: marketerName,
+            entityType: 'marketer',
+            statistics: stats[0],
+            contracts: contracts
+        });
+    } catch (err) {
+        console.error('Marketer detail report error:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Get list of all clients/second parties with statistics
+app.get('/api/reports/clients', authMiddleware, async (req, res) => {
+    try {
+        const [rows] = await pool.execute(`
+            SELECT 
+                second_party,
+                COUNT(*) as contract_count,
+                SUM(total_price) as total_value,
+                SUM(monthly_fee) as monthly_revenue,
+                AVG(total_price) as avg_contract_value,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_count
+            FROM contracts
+            WHERE second_party IS NOT NULL AND second_party != ''
+            GROUP BY second_party
+            ORDER BY contract_count DESC
+        `);
+        res.json(rows);
+    } catch (err) {
+        console.error('Clients report error:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Get detailed report for specific client/second party
+app.get('/api/reports/clients/:name', authMiddleware, async (req, res) => {
+    try {
+        const clientName = decodeURIComponent(req.params.name);
+
+        // Get statistics
+        const [stats] = await pool.execute(`
+            SELECT 
+                COUNT(*) as total_contracts,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_contracts,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_contracts,
+                SUM(CASE WHEN status = 'expired' THEN 1 ELSE 0 END) as expired_contracts,
+                SUM(total_price) as total_value,
+                SUM(monthly_fee) as monthly_revenue,
+                AVG(total_price) as avg_contract_value
+            FROM contracts
+            WHERE second_party = ?
+        `, [clientName]);
+
+        // Get all contracts
+        const cols = [
+            'c.id', 'c.client_id', 'cl.name as client_name', 'c.second_party',
+            'c.service_name', 'c.from_date', 'c.to_date', 'c.total_price',
+            'c.monthly_fee', 'c.manager', 'c.collector', 'c.status',
+            'c.city', 'c.district', 'c.container_type', 'c.client_phone'
+        ];
+        if (availableColumns.includes('duration')) cols.push('c.duration');
+        if (availableColumns.includes('payment_type')) cols.push('c.payment_type');
+        if (availableColumns.includes('tax')) cols.push('c.tax');
+
+        const [contracts] = await pool.execute(`
+            SELECT ${cols.join(', ')}
+            FROM contracts c
+            LEFT JOIN clients cl ON c.client_id = cl.id
+            WHERE c.second_party = ?
+            ORDER BY c.created_at DESC
+        `, [clientName]);
+
+        res.json({
+            entityName: clientName,
+            entityType: 'client',
+            statistics: stats[0],
+            contracts: contracts
+        });
+    } catch (err) {
+        console.error('Client detail report error:', err);
         res.status(500).json({ message: err.message });
     }
 });
@@ -595,8 +863,8 @@ app.post('/api/contracts/:id/attachments', attachmentUpload.array('files', 10), 
 
         for (let i = 0; i < attachments.length; i++) {
             const attachment = attachments[i];
-            const { fieldName, fieldType, textValue, fileData } = attachment;
-            console.log(`Processing attachment ${i + 1}/${attachments.length}: fieldName=${fieldName}, fieldType=${fieldType}, hasFileData=${!!fileData}`);
+            const { fieldName, fieldType, textValue, fileData, isFromParent } = attachment;
+            console.log(`Processing attachment ${i + 1}/${attachments.length}: fieldName=${fieldName}, fieldType=${fieldType}, hasFileData=${!!fileData}, isFromParent=${!!isFromParent}`);
 
             let imageFilename = null;
 
@@ -688,7 +956,8 @@ async function checkSchema() {
             { name: 'container_location', def: "VARCHAR(255)" },
             { name: 'pickup_location', def: "VARCHAR(255)" },
             { name: 'sign_method', def: "VARCHAR(50) DEFAULT 'manual'" },
-            { name: 'tax', def: "VARCHAR(50) DEFAULT '15%'" }
+            { name: 'tax', def: "VARCHAR(50) DEFAULT '15%'" },
+            { name: 'parent_contract_id', def: "VARCHAR(50) DEFAULT NULL" }
         ];
 
         // Force update sign_method to ensure it's long enough
@@ -757,6 +1026,16 @@ async function checkSchema() {
                 )
             `);
             console.log('Contract attachments table checked/created successfully.');
+
+            // Add is_from_parent column if it doesn't exist
+            try {
+                await connection.query(`ALTER TABLE contract_attachments ADD COLUMN is_from_parent BOOLEAN DEFAULT FALSE`);
+                console.log('Added is_from_parent column to contract_attachments');
+            } catch (colErr) {
+                if (colErr.code !== 'ER_DUP_FIELDNAME') {
+                    console.error('Failed to add is_from_parent column:', colErr.message);
+                }
+            }
         } catch (attachErr) {
             console.error('Failed to create contract_attachments table:', attachErr.message);
         }
