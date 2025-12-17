@@ -228,208 +228,364 @@
     }
 
     /* Sidebar Panel Styling */
-    main {
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      gap: 1.5rem;
-      align-items: start;
+    /* --- SMART LAYOUT SYSTEM --- */
+    :root {
+      /* ... variables defined previously ... */
+      --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     }
 
-    .panel {
-      background: var(--bg-secondary, #f8fafc);
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      border: 1px solid var(--border-color, #e2e8f0);
-      position: sticky;
-      top: 20px;
+    /* Custom Scrollbar for Panel & Table */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
     }
 
-    .panel h3 {
-      font-size: 1.25rem;
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Size Controls Segmented Group */
+    .size-controls {
+      display: flex;
+      background: #f1f5f9;
+      padding: 2px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      margin-left: 1rem !important;
+      /* Override inline style */
+      gap: 0 !important;
+      /* Override inline style */
+    }
+
+    .size-controls button {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 4px 10px;
+      font-size: 0.98rem;
       font-weight: 700;
-      margin-bottom: 1.5rem;
-      color: var(--text-primary, #1e293b);
-      padding-bottom: 0.75rem;
-      border-bottom: 2px solid var(--primary-color, #2563eb);
+      color: var(--text-muted);
+      border-radius: 6px;
+      line-height: 1;
+      height: 28px;
+    }
+
+    .size-controls button:hover {
+      background: white;
+      color: var(--primary-color, #2563eb);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Table Wrapper - handle nowrap content */
+    .table-wrap {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      /* layout safety */
+    }
+
+    .table-wrap>div {
+      /* Ensure inner div scrolls if needed */
+      overflow-x: auto;
+    }
+
+    /* Layout Adjustments */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      --surface-color: #ffffff;
+      --bg-color: #f1f5f9;
+      --border-color: #e2e8f0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Cairo', system-ui, sans-serif;
+    }
+
+    .container {
+      max-width: 100%;
+      /* Use full width */
+      margin: 0 auto;
+      padding: 0 1rem;
+      /* Reduce side padding */
+    }
+
+    /* 1. Sleek Header Design */
+    header {
+      background: var(--surface-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      /* Compact header padding */
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1rem;
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      /* Ensure header stays on top */
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo img {
+      width: 40px;
+      /* Smaller logo */
+      height: 40px;
+      border-radius: 8px;
+      object-fit: cover;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .title h1 {
+      font-size: 1.1rem;
+      /* Compact title */
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    .title p {
+      margin: 0;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .top-actions {
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
 
-    .panel h3::before {
-      content: '📊';
-      font-size: 1.5rem;
+    /* 2. Smart Grid Layout - PREVENT SCROLL */
+    main {
+      display: grid;
+      grid-template-columns: 210px 1fr;
+      /* Reduced sidebar width */
+      gap: 1rem;
+      /* Reduced gap */
+      align-items: start;
     }
 
-    /* Stat Cards */
-    .stat {
-      background: linear-gradient(135deg, var(--primary-color, #3b82f6) 0%, var(--primary-dark, #2563eb) 100%);
-      color: white;
-      padding: 1.25rem;
-      border-radius: 12px;
-      margin-bottom: 1rem;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-      transition: all 0.3s ease;
+    /* 3. Modern Sidebar (Right Section) - COMPACT */
+    .panel {
+      background: var(--surface-color);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      /* Reduced padding */
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+      position: sticky;
+      top: 70px;
+      /* Account for sticky header */
+      height: calc(100vh - 85px);
+      overflow-y: auto;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+    }
+
+    .panel h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: var(--text-main);
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
       align-items: center;
-    }
-
-    .stat:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
-    }
-
-    .stat:nth-child(3) {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-
-    .stat:nth-child(3):hover {
-      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-    }
-
-    .stat .muted {
-      font-size: 0.75rem;
-      opacity: 0.9;
-      margin-bottom: 0.375rem;
-      font-weight: 500;
+      gap: 0.5rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
-    .stat strong {
-      font-size: 2.25rem;
-      font-weight: 800;
-      display: block;
-      line-height: 1;
+    .panel h3::before {
+      content: '⚡';
+      /* More dynamic icon */
+      font-size: 1rem;
     }
 
-    .stat .chip {
-      background: rgba(255, 255, 255, 0.25);
-      color: white;
-      padding: 0.375rem 0.75rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      white-space: nowrap;
-    }
-
-    /* Navigation Buttons */
-    .nav {
+    /* Compact Stats Cards */
+    .stat {
+      background: white;
+      border: 1px solid var(--border-color);
+      padding: 0.75rem;
+      /* Compact padding */
+      border-radius: var(--radius-md);
+      margin-bottom: 0.5rem;
       display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-top: 1.5rem;
-    }
-
-    .nav button {
-      width: 100%;
-      padding: 0.875rem 1rem;
-      border: 2px solid transparent;
-      border-radius: 10px;
-      background: var(--bg-tertiary, #f1f5f9);
-      color: var(--text-primary, #1e293b);
-      font-size: 0.9375rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-align: right;
-      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 0.75rem;
+      transition: transform 0.2s, box-shadow 0.2s;
       position: relative;
       overflow: hidden;
     }
 
-    .nav button::before {
-      font-size: 1.25rem;
-    }
-
-    .nav button::after {
+    .stat::before {
       content: '';
       position: absolute;
-      left: 0;
+      right: 0;
       top: 0;
       bottom: 0;
       width: 4px;
-      background: var(--primary-color, #3b82f6);
-      transform: scaleY(0);
-      transition: transform 0.3s ease;
+      background: var(--border-color);
+    }
+
+    .stat:nth-child(2)::before {
+      background: #10b981;
+    }
+
+    /* Active */
+    .stat:nth-child(3)::before {
+      background: #f59e0b;
+    }
+
+    /* Pending */
+
+    .stat:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat .muted {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+    }
+
+    .stat strong {
+      font-size: 1.5rem;
+      /* Smaller number */
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text-main);
+    }
+
+    .stat .chip {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Extremely Compact Table Styles */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.85rem;
+      /* Smaller base font */
+    }
+
+    th,
+    td {
+      padding: 8px 6px;
+      /* Very tight padding */
+      text-align: right;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    td {
+      white-space: nowrap;
+      /* Keep single line */
+    }
+
+    /* Compact Buttons */
+    .btn {
+      padding: 8px 12px;
+      /* Default but slightly tighter */
+      font-size: 0.9rem;
+    }
+
+    /* Table buttons extra compact */
+    td .btn {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+    }
+
+    /* Sleek Navigation */
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: auto;
+      /* Push to bottom or just margin */
+    }
+
+    .nav button {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: right;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
     }
 
     .nav button:hover {
-      background: var(--bg-secondary, #e2e8f0);
-      border-color: var(--primary-color, #3b82f6);
-      transform: translateX(-4px);
+      background: #f8fafc;
+      color: var(--primary-color, #2563eb);
     }
 
     .nav button.active {
-      background: linear-gradient(135deg, var(--primary-color, #3b82f6) 0%, var(--primary-dark, #2563eb) 100%);
+      background: var(--primary-gradient);
       color: white;
-      border-color: var(--primary-color, #3b82f6);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      box-shadow: var(--shadow-md);
+      border: none;
     }
 
-    .nav button.active::after {
-      transform: scaleY(1);
-    }
-
-    /* Responsive */
-    @media (max-width: 1024px) {
-      main {
-        grid-template-columns: 1fr;
-      }
-
-      .panel {
-        position: relative;
-        top: 0;
-      }
-
-      .nav {
-        flex-direction: row;
-        flex-wrap: wrap;
-      }
-
-      .nav button {
-        flex: 1;
-        min-width: 150px;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .stat {
-        flex-direction: column;
-        text-align: center;
-        gap: 0.75rem;
-      }
-
-      .nav button {
-        font-size: 0.875rem;
-        padding: 0.75rem;
-      }
-
-      .nav button::before {
-        font-size: 1.125rem;
-      }
-    }
-
-    /* Quill Toolbar Custom Font Size Labels */
-    .ql-snow .ql-picker.ql-size .ql-picker-label::before,
-    .ql-snow .ql-picker.ql-size .ql-picker-item::before {
-      content: attr(data-value) !important;
-    }
-
-    /* Handle default (empty value) case if any */
-    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value=""]::before,
-    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value=""]::before {
-      content: 'Normal';
+    .nav button::before {
+      font-size: 1.1rem;
     }
 
     .nav button[data-view="contracts"]::before {
       content: '📄';
+    }
+
+    .nav button[data-view="reports"]::before {
+      content: '📊';
     }
 
     .nav button[data-view="clients"]::before {
@@ -440,48 +596,19 @@
       content: '🛠️';
     }
 
-    .nav button[data-view="reports"]::before {
-      content: '📊';
-    }
+    /* Added from original */
 
-    .nav button::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      background: var(--primary-color, #3b82f6);
-      transform: scaleY(0);
-      transition: transform 0.3s ease;
-    }
 
-    .nav button:hover {
-      background: var(--bg-secondary, #e2e8f0);
-      border-color: var(--primary-color, #3b82f6);
-      transform: translateX(-4px);
-    }
-
-    .nav button.active {
-      background: linear-gradient(135deg, var(--primary-color, #3b82f6) 0%, var(--primary-dark, #2563eb) 100%);
-      color: white;
-      border-color: var(--primary-color, #3b82f6);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-
-    .nav button.active::after {
-      transform: scaleY(1);
-    }
-
-    /* Responsive */
+    /* Responsive adjustments */
     @media (max-width: 1024px) {
       main {
         grid-template-columns: 1fr;
       }
 
       .panel {
-        position: relative;
-        top: 0;
+        position: static;
+        height: auto;
+        margin-bottom: 1.5rem;
       }
 
       .nav {
@@ -491,25 +618,21 @@
 
       .nav button {
         flex: 1;
-        min-width: 150px;
+        justify-content: center;
       }
     }
 
-    @media (max-width: 768px) {
-      .stat {
-        flex-direction: column;
-        text-align: center;
-        gap: 0.75rem;
-      }
+    /* Rest of existing styles... */
+    /* Quill Toolbar Custom Font Size Labels */
+    .ql-snow .ql-picker.ql-size .ql-picker-label::before,
+    .ql-snow .ql-picker.ql-size .ql-picker-item::before {
+      content: attr(data-value) !important;
+    }
 
-      .nav button {
-        font-size: 0.875rem;
-        padding: 0.75rem;
-      }
-
-      .nav button::before {
-        font-size: 1.125rem;
-      }
+    /* Handle default (empty value) case if any */
+    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value=""]::before,
+    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value=""]::before {
+      content: 'Normal';
     }
 
     /* Fullscreen A4 Document Editor Modal */
@@ -750,6 +873,161 @@
     .term-item:hover::before {
       opacity: 0.5;
     }
+
+    /* Fix for manually numbered text items - preserve line breaks */
+    #v-terms,
+    .terms-box,
+    .ql-editor {
+      white-space: pre-wrap !important;
+      word-wrap: break-word !important;
+    }
+
+    /* Ensure proper display of Quill content */
+    .ql-editor p,
+    #v-terms p {
+      margin: 10px 0;
+      white-space: pre-wrap;
+    }
+
+    /* Print styles - aggressive spacing reduction to fit on one page */
+    @media print {
+      /* 
+        IMPORTANT: For pre-stamped paper with header/footer, adjust the padding below!
+        
+        Example: If your stamped header is 20mm and footer is 15mm:
+        Change padding from: padding: 15mm 18mm !important;
+        To: padding: 35mm 18mm 30mm 18mm !important;
+        
+        Format: padding: TOP RIGHT BOTTOM LEFT;
+      */
+      /* 
+        NOTE: To adjust top/bottom margins for pre-stamped paper,
+        edit Lines 2905-2906 in the printViewContract iframe function.
+      */
+
+      /* Compact document for print */
+      #doc-content {
+        padding: 15mm !important;
+        min-height: auto !important;
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+      }
+
+      /* Reduce header spacing */
+      .contract-header {
+        margin-bottom: 12px !important;
+      }
+
+      .top-info-row {
+        margin-bottom: 15px !important;
+      }
+
+      /* Compact contract sections */
+      .contract-section {
+        margin-bottom: 10px !important;
+      }
+
+      /* Reduce terms box spacing */
+      .terms-box,
+      #v-terms {
+        margin-bottom: 15px !important;
+        padding: 0 !important;
+        line-height: 1.4 !important;
+        white-space: pre-wrap !important;
+        word-wrap: break-word !important;
+      }
+
+      /* FIX: Restore proper list formatting - don't override paragraph margins in lists */
+      #v-terms ol,
+      #v-terms ul,
+      .ql-editor ol,
+      .ql-editor ul {
+        margin: 10px 0 !important;
+        padding-right: 20px !important;
+        display: block !important;
+      }
+
+      #v-terms li,
+      .ql-editor li {
+        margin: 6px 0 !important;
+        line-height: 1.5 !important;
+        display: list-item !important;
+        text-align: right !important;
+        direction: rtl !important;
+      }
+
+      /* Ensure list items are block level */
+      #v-terms ol li,
+      #v-terms ul li,
+      .ql-editor ol li,
+      .ql-editor ul li {
+        display: list-item !important;
+        margin-bottom: 8px !important;
+      }
+
+      /* Only compact non-list paragraphs */
+      #v-terms>p {
+        margin: 8px 0 !important;
+        line-height: 1.4 !important;
+      }
+
+      /* Signature section - keep together and reduce spacing */
+      #contract-signatures,
+      .signature-section {
+        margin-top: 0px !important;
+        padding-top: 0 !important;
+        page-break-before: avoid !important;
+        page-break-inside: avoid !important;
+        break-before: avoid !important;
+        break-inside: avoid !important;
+      }
+
+      /* Keep terms and signatures together */
+      #v-terms {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+
+      /* Reduce signature text spacing */
+      #contract-signatures p {
+        margin: 5px 0 !important;
+      }
+
+      /* Remove extra breaks in signatures ONLY, not in terms */
+      #contract-signatures br {
+        display: none !important;
+      }
+
+      /* Ensure br tags work in terms content */
+      #v-terms br,
+      .ql-editor br,
+      .terms-box br {
+        display: block !important;
+        content: "" !important;
+      }
+
+      /* Preserve white-space in ALL term content - use wildcard to catch everything */
+      #v-terms,
+      #v-terms *,
+      #v-terms p,
+      #v-terms div,
+      .ql-editor,
+      .ql-editor *,
+      .ql-editor p,
+      .ql-editor div,
+      .terms-box,
+      .terms-box * {
+        white-space: pre-wrap !important;
+        word-wrap: break-word !important;
+      }
+
+      /* Prevent widows/orphans */
+      p,
+      div {
+        orphans: 3;
+        widows: 3;
+      }
+    }
   </style>
 </head>
 
@@ -844,7 +1122,7 @@
             <div class="field small"><label>نوع الحاوية</label><select id="containerType">
                 <option>برميل</option>
                 <option>2 ياردة</option>
-                <option>1 ياردة</option>
+                <option>4 ياردة</option>
                 <option>6 ياردة</option>
                 <option>240 Liter</option>
                 <option>360 Liter</option>
@@ -1093,7 +1371,7 @@
             <thead>
               <tr>
                 <th class="sortable" data-sort="id" onclick="sortTable('id')">رقم <span class="sort-arrow"></span></th>
-                <th class="sortable" data-sort="client_name" onclick="sortTable('client_name')">العميل <span
+                <th class="sortable" data-sort="second_party" onclick="sortTable('second_party')">العميل <span
                     class="sort-arrow"></span></th>
                 <th class="sortable" data-sort="service_name" onclick="sortTable('service_name')">الخدمة <span
                     class="sort-arrow"></span></th>
@@ -1114,116 +1392,238 @@
           </table>
         </div>
 
-        <!-- Reports Section - Enhanced with Manager & Collector Stats -->
+        <!-- Reports Section - Enhanced with Entity-Level Drill-Down -->
         <div class="table-wrap" id="reportsArea" style="display:none;">
           <h3 style="margin-bottom: 1.5rem;">التقارير والإحصائيات</h3>
 
-          <!-- Key Metrics -->
-          <div
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-            <div
-              style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-              <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">إجمالي العقود</div>
-              <div style="font-size: 2.5rem; font-weight: 700;" id="reportTotalContracts">0</div>
-            </div>
-
-            <div
-              style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
-              <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">إجمالي الإيرادات</div>
-              <div style="font-size: 2.5rem; font-weight: 700;" id="reportTotalRevenue">0</div>
-              <div style="font-size: 0.75rem; opacity: 0.8;">ريال سعودي</div>
-            </div>
-
-            <div
-              style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
-              <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">إجمالي العملاء</div>
-              <div style="font-size: 2.5rem; font-weight: 700;" id="reportTotalClients">0</div>
-            </div>
-
-            <div
-              style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);">
-              <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">متوسط قيمة العقد</div>
-              <div style="font-size: 2.5rem; font-weight: 700;" id="reportAvgContract">0</div>
-              <div style="font-size: 0.75rem; opacity: 0.8;">ريال سعودي</div>
-            </div>
-          </div>
-
-          <!-- Status Distribution -->
+          <!-- Entity Type Selector -->
           <div
             style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #e5e7eb;">
-            <h4 style="margin-bottom: 1rem;">توزيع العقود حسب الحالة</h4>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-              <div style="padding: 1rem; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #10b981;">
-                <div style="color: #059669; font-size: 0.875rem; margin-bottom: 0.25rem;">نشطة</div>
-                <div style="font-size: 1.75rem; font-weight: 700; color: #047857;" id="reportActiveCount">0</div>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+              <button class="btn" id="showCollectorsBtn" style="flex: 1; min-width: 200px; padding: 1rem;">
+                💰 المحصلين
+              </button>
+              <button class="btn" id="showMarketersBtn" style="flex: 1; min-width: 200px; padding: 1rem;">
+                📈 المسوقين
+              </button>
+              <button class="btn" id="showClientsBtn" style="flex: 1; min-width: 200px; padding: 1rem;">
+                🏢 العملاء / الطرف الثاني
+              </button>
+              <button class="btn primary" id="showOverviewBtn" style="flex: 1; min-width: 200px; padding: 1rem;">
+                📊 نظرة عامة
+              </button>
+            </div>
+          </div>
+
+          <!-- Overview Section (Default) -->
+          <div id="overviewSection">
+            <!-- Key Metrics -->
+            <div
+              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+              <div
+                style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">إجمالي العقود</div>
+                <div style="font-size: 2.5rem; font-weight: 700;" id="reportTotalContracts">0</div>
               </div>
-              <div style="padding: 1rem; background: #fffbeb; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                <div style="color: #d97706; font-size: 0.875rem; margin-bottom: 0.25rem;">قيد التوقيع</div>
-                <div style="font-size: 1.75rem; font-weight: 700; color: #b45309;" id="reportPendingCount">0</div>
+
+              <div
+                style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+                <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">إجمالي الإيرادات</div>
+                <div style="font-size: 2.5rem; font-weight: 700;" id="reportTotalRevenue">0</div>
+                <div style="font-size: 0.75rem; opacity: 0.8;">ريال سعودي</div>
               </div>
-              <div style="padding: 1rem; background: #fef2f2; border-radius: 8px; border-left: 4px solid #ef4444;">
-                <div style="color: #dc2626; font-size: 0.875rem; margin-bottom: 0.25rem;">منتهية</div>
-                <div style="font-size: 1.75rem; font-weight: 700; color: #b91c1c;" id="reportExpiredCount">0</div>
+
+              <div
+                style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+                <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">إجمالي العملاء</div>
+                <div style="font-size: 2.5rem; font-weight: 700;" id="reportTotalClients">0</div>
+              </div>
+
+              <div
+                style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);">
+                <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">متوسط قيمة العقد</div>
+                <div style="font-size: 2.5rem; font-weight: 700;" id="reportAvgContract">0</div>
+                <div style="font-size: 0.75rem; opacity: 0.8;">ريال سعودي</div>
+              </div>
+            </div>
+
+            <!-- Status Distribution -->
+            <div
+              style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #e5e7eb;">
+              <h4 style="margin-bottom: 1rem;">توزيع العقود حسب الحالة</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div style="padding: 1rem; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #10b981;">
+                  <div style="color: #059669; font-size: 0.875rem; margin-bottom: 0.25rem;">نشطة</div>
+                  <div style="font-size: 1.75rem; font-weight: 700; color: #047857;" id="reportActiveCount">0</div>
+                </div>
+                <div style="padding: 1rem; background: #fffbeb; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                  <div style="color: #d97706; font-size: 0.875rem; margin-bottom: 0.25rem;">قيد التوقيع</div>
+                  <div style="font-size: 1.75rem; font-weight: 700; color: #b45309;" id="reportPendingCount">0</div>
+                </div>
+                <div style="padding: 1rem; background: #fef2f2; border-radius: 8px; border-left: 4px solid #ef4444;">
+                  <div style="color: #dc2626; font-size: 0.875rem; margin-bottom: 0.25rem;">منتهية</div>
+                  <div style="font-size: 1.75rem; font-weight: 700; color: #b91c1c;" id="reportExpiredCount">0</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Manager Performance -->
+            <div
+              style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #e5e7eb;">
+              <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.5rem;">📈</span>
+                أداء المسوقين
+              </h4>
+              <div style="overflow-x: auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>المسوق</th>
+                      <th>عدد العقود</th>
+                      <th>إجمالي القيمة</th>
+                      <th>الإيرادات الشهرية</th>
+                      <th>إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody id="managerStatsTbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Collector Performance -->
+            <div
+              style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #e5e7eb;">
+              <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.5rem;">💰</span>
+                أداء المحصلين
+              </h4>
+              <div style="overflow-x: auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>المحصل</th>
+                      <th>عدد العقود</th>
+                      <th>إجمالي القيمة</th>
+                      <th>الإيرادات الشهرية</th>
+                      <th>إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody id="collectorStatsTbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Top Clients -->
+            <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e5e7eb;">
+              <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.5rem;">🏆</span>
+                أفضل 5 عملاء (حسب قيمة العقود)
+              </h4>
+              <div style="overflow-x: auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>العميل</th>
+                      <th>عدد العقود</th>
+                      <th>إجمالي القيمة</th>
+                      <th>إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody id="topClientsTbody"></tbody>
+                </table>
               </div>
             </div>
           </div>
 
-          <!-- Manager Performance -->
-          <div
-            style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #e5e7eb;">
-            <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-              <span style="font-size: 1.5rem;">📈</span>
-              أداء المسوقين
-            </h4>
-            <table>
-              <thead>
-                <tr>
-                  <th>المسوق</th>
-                  <th>عدد العقود</th>
-                  <th>إجمالي القيمة</th>
-                  <th>الإيرادات الشهرية</th>
-                </tr>
-              </thead>
-              <tbody id="managerStatsTbody"></tbody>
-            </table>
+          <!-- Entity Selection Section -->
+          <div id="entitySelectionSection" style="display:none;">
+            <div
+              style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #e5e7eb;">
+              <h4 id="entitySectionTitle" style="margin-bottom: 1rem;">اختر المحصل</h4>
+
+              <!-- Search/Filter -->
+              <div style="margin-bottom: 1rem;">
+                <input type="text" id="entitySearchInput" placeholder="ابحث..."
+                  style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #e0e6ef; font-size: 1rem;">
+              </div>
+
+              <!-- Entity Cards Grid -->
+              <div id="entityCardsGrid"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                <!-- Cards will be populated by JavaScript -->
+              </div>
+            </div>
           </div>
 
-          <!-- Collector Performance -->
-          <div
-            style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #e5e7eb;">
-            <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-              <span style="font-size: 1.5rem;">💰</span>
-              أداء المحصلين
-            </h4>
-            <table>
-              <thead>
-                <tr>
-                  <th>المحصل</th>
-                  <th>عدد العقود</th>
-                  <th>إجمالي القيمة</th>
-                  <th>الإيرادات الشهرية</th>
-                </tr>
-              </thead>
-              <tbody id="collectorStatsTbody"></tbody>
-            </table>
-          </div>
+          <!-- Entity Detail Report Section -->
+          <div id="entityDetailSection" style="display:none;">
+            <!-- Back Button -->
+            <div style="margin-bottom: 1rem;">
+              <button class="btn" id="backToEntitiesBtn">
+                ← العودة للقائمة
+              </button>
+            </div>
 
-          <!-- Top Clients -->
-          <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e5e7eb;">
-            <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-              <span style="font-size: 1.5rem;">🏆</span>
-              أفضل 5 عملاء (حسب قيمة العقود)
-            </h4>
-            <table>
-              <thead>
-                <tr>
-                  <th>العميل</th>
-                  <th>عدد العقود</th>
-                  <th>إجمالي القيمة</th>
-                </tr>
-              </thead>
-              <tbody id="topClientsTbody"></tbody>
-            </table>
+            <!-- Entity Header -->
+            <div
+              style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
+              <h3 id="entityDetailName" style="margin: 0 0 1rem 0; font-size: 2rem;">محمد أحمد</h3>
+              <div id="entityDetailType" style="font-size: 1rem; opacity: 0.9; margin-bottom: 1.5rem;">محصل</div>
+
+              <!-- Statistics Grid -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                <div
+                  style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; backdrop-filter: blur(10px);">
+                  <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.25rem;">إجمالي العقود</div>
+                  <div id="entityStatTotalContracts" style="font-size: 1.75rem; font-weight: 700;">0</div>
+                </div>
+                <div
+                  style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; backdrop-filter: blur(10px);">
+                  <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.25rem;">نشطة</div>
+                  <div id="entityStatActiveContracts" style="font-size: 1.75rem; font-weight: 700;">0</div>
+                </div>
+                <div
+                  style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; backdrop-filter: blur(10px);">
+                  <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.25rem;">إجمالي القيمة</div>
+                  <div id="entityStatTotalValue" style="font-size: 1.75rem; font-weight: 700;">0 ر.س</div>
+                </div>
+                <div
+                  style="background: rgba(255,255,255,0.1); padding: 1rem; border-radius: 8px; backdrop-filter: blur(10px);">
+                  <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.25rem;">الإيرادات الشهرية</div>
+                  <div id="entityStatMonthlyRevenue" style="font-size: 1.75rem; font-weight: 700;">0 ر.س</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contracts Table -->
+            <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e5e7eb;">
+              <h4 style="margin-bottom: 1rem;">جميع العقود</h4>
+              <div style="overflow-x: auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>رقم العقد</th>
+                      <th>العميل / الطرف الثاني</th>
+                      <th>الخدمة</th>
+                      <th>من تاريخ</th>
+                      <th>إلى تاريخ</th>
+                      <th>الدفعة الشهرية</th>
+                      <th>القيمة الإجمالية</th>
+                      <th>الحالة</th>
+                      <th>إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody id="entityContractsTbody"></tbody>
+                </table>
+              </div>
+
+              <!-- Export Button -->
+              <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                <button class="btn primary" id="exportEntityReportBtn">
+                  📊 تصدير التقرير إلى Excel
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1512,11 +1912,30 @@
         }
       });
 
-      // Escape key to close all modals
+      // Escape key to close all modals and trigger cancel buttons
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
+          // First try to close visible modals
           const modals = document.querySelectorAll('.modal');
-          modals.forEach(modal => hideElem(modal));
+          let closedAny = false;
+          modals.forEach(modal => {
+            if (modal.style.display !== 'none' && modal.style.display !== '') {
+              hideElem(modal);
+              closedAny = true;
+            }
+          });
+
+          // If no modal was closed, try clicking cancel/close buttons
+          if (!closedAny) {
+            // Find all visible cancel buttons (إلغاء)
+            const cancelButtons = document.querySelectorAll('button');
+            for (const btn of cancelButtons) {
+              if (btn.textContent.includes('إلغاء') && btn.offsetParent !== null) {
+                btn.click();
+                break;
+              }
+            }
+          }
         }
       });
 
@@ -2309,27 +2728,29 @@
           const toDate = formatDate(c.to_date);
 
           tr.innerHTML = `
-            <td>${c.id}</td>
-            <td>${c.second_party || ''}</td>
-            <td>${c.service_name || ''}</td>
-            <td>${fromDate} → ${toDate}</td>
-            <td>${c.total_price || 0}</td>
-            <td>${c.manager || ''}</td>
-            <td>${c.collector || ''}</td>
-            <td>
+            <td style="white-space: nowrap;">${c.id}</td>
+            <td style="white-space: nowrap;">${c.second_party || ''}</td>
+            <td style="white-space: nowrap;">${c.service_name || ''}</td>
+            <td style="white-space: nowrap;">${fromDate} → ${toDate}</td>
+            <td style="white-space: nowrap;">${c.total_price || 0}</td>
+            <td style="white-space: nowrap;">${c.manager || ''}</td>
+            <td style="white-space: nowrap;">${c.collector || ''}</td>
+            <td style="white-space: nowrap;">
                 <span class="chip ${c.status === 'active' ? 'active' : (c.status === 'pending' ? 'pending' : 'expired')}">
                 ${c.status === 'active' ? 'نشط' : (c.status === 'pending' ? 'قيد التوقيع' : 'منتهي')}
                 </span>
             </td>
-            <td>
-              <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
-                  <button class="btn" onclick="openView('${c.id}')" title="عرض العقد النهائي">عرض</button>
-                  <button class="btn" onclick="openEdit('${c.id}')" title="تعديل العقد">تعديل</button>
+            <td style="white-space: nowrap;">
+              <div style="display:inline-flex; gap:3px; align-items:center; flex-wrap:nowrap;">
+                  <button class="btn" onclick="openView('${c.id}')" title="عرض العقد النهائي" style="padding:4px 8px; font-size:0.85em;">عرض</button>
+                  <button class="btn" onclick="openEdit('${c.id}')" title="تعديل العقد" style="padding:4px 8px; font-size:0.85em;">تعديل</button>
+                  <button class="btn" onclick="openRenew('${c.id}')" title="تجديد العقد" style="padding:4px 8px; font-size:0.85em; background:#10b981; color:white; border:none;">تجديد</button>
                   <button class="btn small" onclick="updateStatus('${c.id}','active')" title="تفعيل">✅</button>
                   <button class="btn small" onclick="updateStatus('${c.id}','pending')" title="قيد التوقيع">⏳</button>
                   <button class="btn small" onclick="updateStatus('${c.id}','expired')" title="إنهاء">🛑</button>
+                  ${containerMapLink ? `<a href="https://www.google.com/maps?q=${c.container_location}" target="_blank" style="font-size:0.75em; margin-right:4px; white-space:nowrap;">📍</a>` : ''}
+                  <button class="btn small" onclick="deleteContract('${c.id}')" title="حذف العقد" style="background:#ef4444; color:white; border:none;">🗑️</button>
               </div>
-              <div style="margin-top:6px; font-size:0.8em;">${containerMapLink}</div>
             </td>
           `;
           tbody.appendChild(tr);
@@ -2394,62 +2815,24 @@
           safeSet('v-second-party-email', c.client_email || '');
 
           // Format and set terms
-          // Format and set terms with Hierarchy Support - REFINED
+          // Format and set terms - Preserve User Line Breaks Only
           const formatTerms = (termsText) => {
             if (!termsText) return '';
 
-            // Fix splitting to handle both \r and \n (Quill/HTML usually uses \n)
-            const lines = termsText.split(/\r?\n/);
-            let html = '';
-            let subIndex = 0;
+            // If content contains HTML tags (from Quill editor), preserve it as-is
+            // The Quill editor already provides properly formatted HTML
+            if (termsText.match(/<[^>]+>/)) {
+              return termsText;
+            }
 
-            lines.forEach(line => {
-              if (!line.trim()) {
-                html += '<br>';
-                return;
-              }
-
-              // Strip HTML tags to check text content for keywords
-              const textContent = line.replace(/<[^>]*>/g, '').trim();
-
-              // Remove manual numbering from the text check (e.g. "1. title")
-              const cleanText = textContent.replace(/^\d+[-.]\s*/, '');
-
-              // Check if it's a Main Term/Title
-              const isMainTerm = cleanText.match(/^(البند|قيمة العقد|عقد إتفاق|تمهيد|أولاً|ثانياً|ثالثاً|رابعاً|خامساً)/);
-
-              // 1. Check for BLOCK-level HTML tags (p, div, headers)
-              // These define their own layout, output as-is
-              if (line.match(/^<(p|div|h[1-6]|ul|ol|table|blockquote)/i)) {
-                subIndex = 0;
-                html += line;
-              }
-              // 2. Check for INLINE HTML tags or formatting (span, strong, em, classes, styles)
-              // If the line contains ANY HTML tag, it likely has formatting - preserve it
-              else if (line.match(/<[^>]+>/)) {
-                subIndex = 0;
-                html += line;
-              }
-              // 3. Check if it's a Main Term/Title (PLAIN TEXT ONLY, no HTML)
-              // Only apply auto-styling if it's pure text
-              else if (isMainTerm) {
-                subIndex = 0;
-                html += `<div style="font-weight:700; margin-top:12px; margin-bottom:6px;">${line}</div>`;
-              }
-              // 4. Check for Level 2 (Indented by 4 spaces in plain text)
-              else if (line.startsWith('    ')) {
-                subIndex++;
-                html += `<div style="margin-right: 20px; font-size: 0.95em; color: #334155;">
-                  <span style="display:inline-block; width:20px; font-weight:600;">${subIndex}.</span>${line.trim()}
-                </div>`;
-              }
-              // 5. Standard plain text (no HTML at all)
-              else {
-                subIndex = 0;
-                html += `<div style="margin-bottom: 4px;">${line}</div>`;
-              }
-            });
-            return html;
+            // For plain text without HTML, convert line breaks to HTML
+            // Preserve user's manual line breaks (Enter key presses) as <br> tags
+            // Replace single \n with <br>, and double \n\n with paragraph breaks
+            return termsText
+              .split('\n')
+              .map(line => line.trim())
+              .filter(line => line.length > 0 || termsText.includes('\n\n')) // Keep empty lines only if double breaks exist
+              .join('<br>');
           };
 
           const termsEl = document.getElementById('v-terms');
@@ -2506,7 +2889,10 @@
             <style>
               @page {
                 size: A4;
-                margin: 0;
+                margin-top: 40mm;     /* ← ADJUST: Top margin for stamped header */
+                margin-bottom: 40mm;  /* ← ADJUST: Bottom margin for stamped footer */
+                margin-left: 0mm;
+                margin-right: 0mm;
               }
               body {
                 font-family: 'Cairo', sans-serif;
@@ -2580,12 +2966,26 @@
                 margin-bottom: 20px;
               }
               .terms-box {
-                white-space: pre-wrap;
+                white-space: normal;
               }
+              
+              /* Remove excessive spacing from Quill editor content */
+              .terms-box p {
+                margin: 0;
+                padding: 0;
+              }
+              .terms-box div {
+                margin: 0;
+                padding: 0;
+              }
+              .terms-box br + br {
+                display: none; /* Hide consecutive line breaks */
+              }
+              
               .signature-section {
                 display: flex;
                 justify-content: space-between;
-                margin-top: 40px;
+                margin-top: 10px;
                 page-break-inside: avoid; /* Try to keep signatures together */
               }
 
@@ -2951,6 +3351,187 @@
       }
       window.openEdit = openEdit;
 
+      // ============ OPEN RENEW - Contract Renewal Function ============
+      async function openRenew(id) {
+        try {
+          const rows = await apiFetch('/contracts?q=' + id, { method: 'GET' });
+          const c = Array.isArray(rows) ? rows.find(r => r.id === id) : rows;
+          if (!c) return alert('العقد غير موجود');
+
+          delete $('formWrap').dataset.editing;
+          $('formWrap').dataset.renewing = 'true';
+          $('formWrap').dataset.parentContractId = id;
+
+          // Load form fields
+          if ($('clientName')) $('clientName').value = c.second_party || '';
+          if ($('clientType')) $('clientType').value = c.client_type || 'فرد';
+          if ($('city')) $('city').value = c.city || '';
+          if ($('district')) $('district').value = c.district || '';
+
+          if (c.service_name && $('serviceType')) {
+            const sel = $('serviceType');
+            if (![...sel.options].some(o => o.value === c.service_name)) {
+              const opt = document.createElement('option');
+              opt.value = c.service_name;
+              opt.textContent = c.service_name;
+              sel.appendChild(opt);
+            }
+            $('serviceType').value = c.service_name;
+          }
+
+          // Set new dates: today to one year later
+          const today = new Date();
+          const oneYearLater = new Date(today);
+          oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+          if ($('dateFrom')) $('dateFrom').value = today.toISOString().split('T')[0];
+          if ($('dateTo')) $('dateTo').value = oneYearLater.toISOString().split('T')[0];
+
+          if ($('monthlyFee')) $('monthlyFee').value = c.monthly_fee || '';
+          if ($('tax')) $('tax').value = c.tax || '15%';
+          if ($('totalPrice')) $('totalPrice').value = c.total_price || '';
+
+          if ($('manager')) {
+            const val = c.manager || '';
+            const sel = $('manager');
+            if (val && ![...sel.options].some(o => o.value === val)) {
+              const opt = document.createElement('option');
+              opt.value = val;
+              opt.textContent = val;
+              sel.appendChild(opt);
+            }
+            sel.value = val;
+          }
+          if ($('collector')) {
+            const val = c.collector || '';
+            const sel = $('collector');
+            if (val && ![...sel.options].some(o => o.value === val)) {
+              const opt = document.createElement('option');
+              opt.value = val;
+              opt.textContent = val;
+              sel.appendChild(opt);
+            }
+            sel.value = val;
+          }
+
+          if ($('status')) $('status').value = 'pending';
+          if ($('containerType')) $('containerType').value = c.container_type || 'برميل';
+          if ($('containerLocation')) $('containerLocation').value = c.container_location || '';
+          if ($('location')) $('location').value = c.location || '';
+          if ($('duration')) $('duration').value = c.duration || 'سنوي';
+          if ($('paymentType')) $('paymentType').value = c.payment_type || 'سنوية';
+          if ($('signMethod')) $('signMethod').value = c.sign_method || 'إلكتروني';
+
+          if ($('terms')) $('terms').value = c.terms || '';
+          if ($('termsSummary')) {
+            if (c.terms && c.terms.trim().length > 0) {
+              $('termsSummary').value = 'تجديد: ' + c.terms.split('\n')[0].substring(0, 30) + '...';
+            } else {
+              $('termsSummary').value = '';
+            }
+          }
+
+          if ($('firstParty')) $('firstParty').value = c.first_party || 'شركة بفت للمقاولات';
+          if ($('secondParty')) $('secondParty').value = c.second_party || '';
+          if ($('clientEmail')) $('clientEmail').value = c.client_email || '';
+          if ($('clientPhone')) $('clientPhone').value = c.client_phone || '';
+
+          updateGoogleLink('container', c.container_location);
+
+          // Fetch parent attachments
+          try {
+            const attachments = await apiFetch(`/contracts/${id}/attachments`, { method: 'GET' });
+            displayRenewalAttachments(attachments || [], id);
+
+            if (attachments && Array.isArray(attachments)) {
+              attachments.forEach(att => {
+                if (att.field_type === 'text' && att.text_value) {
+                  if (att.field_name === 'commercial_registration' && $('commercialRegistry')) {
+                    $('commercialRegistry').value = att.text_value;
+                  } else if (att.field_name === 'activity_license' && $('activityLicense')) {
+                    $('activityLicense').value = att.text_value;
+                  } else if (att.field_name === 'tax_number' && $('taxNumber')) {
+                    $('taxNumber').value = att.text_value;
+                  }
+                }
+              });
+            }
+          } catch {
+            displayRenewalAttachments([], id);
+          }
+
+          setContractAttachmentsVisible(true);
+          showElem($('formWrap'));
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          alert(`تم تحميل بيانات العقد ${id} للتجديد. سيتم إنشاء عقد جديد عند الحفظ.`);
+        } catch (err) {
+          console.error('Open renew error:', err);
+          alert('خطأ: ' + (err.message || 'خطأ غير معروف'));
+        }
+      }
+      window.openRenew = openRenew;
+
+      function displayRenewalAttachments(attachments, parentId) {
+        const container = $('attachmentsDisplay');
+        const list = $('attachmentsList');
+        if (!container || !list) return;
+
+        if (attachments.length === 0) {
+          container.style.display = 'block';
+          list.innerHTML = '<div class="muted" style="padding:12px; text-align:center;">لا توجد مرفقات من العقد الأصلي</div>';
+          return;
+        }
+
+        container.style.display = 'block';
+        list.innerHTML = `
+          <div style="margin-bottom:12px; padding:12px; background:#f0fdf4; border-radius:6px; border:1px solid #bbf7d0;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <strong style="color:#15803d;">📋 مرفقات من العقد الأصلي (${parentId})</strong>
+                <p style="margin:4px 0 0 0; font-size:0.85em; color:#4ade80;">سيتم نسخها للعقد الجديد تلقائياً</p>
+              </div>
+              <button id="toggleOldAttachments" class="btn small" style="background:#10b981; color:white;" onclick="toggleOldAttachmentsVisibility()">إخفاء</button>
+            </div>
+          </div>
+          <div id="oldAttachmentsContainer" style="display:block;"></div>
+        `;
+
+        const oldContainer = document.getElementById('oldAttachmentsContainer');
+        const labels = { license_photo: 'صورة الرخصة', commercial_registration: 'السجل التجاري', activity_license: 'رخصة النشاط', tax_number: 'الرقم الضريبي' };
+
+        attachments.forEach(att => {
+          const label = labels[att.field_name] || att.field_name;
+          const div = document.createElement('div');
+          div.style.cssText = 'margin-bottom:12px; padding:12px; background:#fef3c7; border-radius:6px; border:1px solid #fde047;';
+
+          if (att.field_type === 'text') {
+            div.innerHTML = `<div style="font-weight:600; color:#92400e; margin-bottom:4px;">${label} <span style="font-size:0.75em;">(قديم)</span></div>
+              <div style="color:#78350f; font-size:14px;">${att.text_value || ''}</div>`;
+          } else if (att.field_type === 'image' && att.image_filename) {
+            const url = `/api/contracts/${parentId}/attachments/file/${att.image_filename}`;
+            const isImg = att.image_filename.match(/\.(jpg|jpeg|png|gif)$/i);
+            div.innerHTML = `<div style="font-weight:600; color:#92400e; margin-bottom:8px;">${label} <span style="font-size:0.75em;">(قديم)</span></div>
+              ${isImg ? `<a href="${url}" target="_blank"><img src="${url}" style="max-width:200px; border-radius:4px; border:1px solid #fde047;"/></a>` :
+                `<a href="${url}" target="_blank" style="color:#92400e; text-decoration:none;"><span>📄</span> ${att.image_filename}</a>`}`;
+          }
+          oldContainer.appendChild(div);
+        });
+      }
+
+      window.toggleOldAttachmentsVisibility = function () {
+        const container = document.getElementById('oldAttachmentsContainer');
+        const btn = document.getElementById('toggleOldAttachments');
+        if (container && btn) {
+          if (container.style.display === 'none') {
+            container.style.display = 'block';
+            btn.textContent = 'إخفاء';
+          } else {
+            container.style.display = 'none';
+            btn.textContent = 'عرض';
+          }
+        }
+      };
+
+
       // Display contract attachments
       function displayAttachments(attachments) {
         const container = $('attachmentsDisplay');
@@ -3132,6 +3713,12 @@
             collector: $('collector')?.value || '' // Sending it even if backend might ignore it
           };
 
+          // If this is a renewal, track the parent contract ID
+          if ($('formWrap').dataset.renewing === 'true' && $('formWrap').dataset.parentContractId) {
+            payload.parent_contract_id = $('formWrap').dataset.parentContractId;
+            console.log(`📋 Renewal: Linking to parent contract ${payload.parent_contract_id}`);
+          }
+
           console.log('Saving contract payload:', payload);
 
           if (!isNew) {
@@ -3165,12 +3752,51 @@
             const res = await apiFetch('/contracts', { method: 'POST', body: JSON.stringify(payload) });
             const newContractId = res.id || contractId;
 
-            // Upload attachments for NEW contracts (not renewals)
+            // Upload attachments for NEW contracts
             const isRenewal = $('formWrap').dataset.renewing === 'true';
+            const parentContractId = $('formWrap').dataset.parentContractId;
             const attachmentsVisible = $('contractAttachmentsSection') &&
               $('contractAttachmentsSection').style.display !== 'none';
 
-            if (!isRenewal && attachmentsVisible) {
+            if (isRenewal && parentContractId) {
+              // For renewals: copy attachments from parent contract
+              try {
+                console.log('📋 Copying attachments from parent contract:', parentContractId);
+                const parentAttachments = await apiFetch(`/contracts/${parentContractId}/attachments`, { method: 'GET' });
+
+                if (parentAttachments && parentAttachments.length > 0) {
+                  // Prepare attachment data to copy
+                  const attachmentsCopy = parentAttachments.map(att => ({
+                    fieldName: att.field_name,
+                    fieldType: att.field_type,
+                    textValue: att.text_value,
+                    isFromParent: true // Mark as inherited
+                  }));
+
+                  // Send to server
+                  await apiFetch(`/contracts/${newContractId}/attachments`, {
+                    method: 'POST',
+                    body: JSON.stringify({ attachmentsData: attachmentsCopy })
+                  });
+
+                  console.log(`✅ Copied ${attachmentsCopy.length} attachments from parent contract`);
+                }
+              } catch (copyErr) {
+                console.warn('⚠️ Failed to copy parent attachments:', copyErr);
+                // Don't alert user - this is not critical
+              }
+
+              // Also upload any NEW attachments user added
+              if (attachmentsVisible) {
+                try {
+                  await uploadContractAttachments(newContractId);
+                  console.log('✅ Uploaded new attachments');
+                } catch (attachErr) {
+                  console.warn('⚠️ Failed to upload new attachments:', attachErr);
+                }
+              }
+            } else if (!isRenewal && attachmentsVisible) {
+              // Regular new contract - upload attachments normally
               try {
                 console.log('Uploading attachments for new contract:', newContractId);
                 await uploadContractAttachments(newContractId);
@@ -3355,7 +3981,29 @@
         }
       }
 
-      // Expose function globally for use in save contract function
+      // Expose function globally for      // Delete Contract Function
+      window.deleteContract = async function (contractId) {
+        if (!confirm(`هل أنت متأكد من حذف العقد ${contractId}؟\n\nسيتم حذف العقد بشكل نهائي من قاعدة البيانات وجميع المرفقات المتعلقة به.`)) {
+          return;
+        }
+
+        try {
+          const response = await apiFetch(`/contracts/${contractId}`, {
+            method: 'DELETE'
+          });
+
+          if (response && response.message) {
+            alert(`✅ ${response.message}`);
+            // Reload contracts list
+            await loadContracts();
+          }
+        } catch (err) {
+          console.error('Delete error:', err);
+          alert('❌ فشل حذف العقد: ' + (err.message || 'خطأ غير معروف'));
+        }
+      };
+
+      // Save Contract Function
       window.uploadContractAttachments = uploadContractAttachments;
 
       // ============ NEW CONTRACT & RENEW CONTRACT BUTTON HANDLERS ============
@@ -5630,7 +6278,7 @@
         };
 
         // Generate the full text
-        const text = `الطرف الثاني (${clientName}) وجنسيتها ${defaultValues.nationality}، بموجب سجل تجاري رقم (${commercialRegistry}) الصادر من ${defaultValues.registryIssuePlace} بتاريخ ${defaultValues.registryIssueDate} الرقم الضريبي (${taxNumber})، وعنوانها في مدينة ${defaultValues.city} ص ب ${defaultValues.poBox} الرمز البريدي ${defaultValues.postalCode}، البريد الالكتروني (${defaultValues.email}) : جوال ( ${clientPhone}) ويمثله في التواقيع على هذا العقد الاستاذ / ${defaultValues.representative} - بصفته ${defaultValues.representativeTitle} ونشار اليه في هذا العقد ب(الطرف الثاني)`;
+        const text = `الطرف الثاني ${clientName} وجنسيتها ${defaultValues.nationality}، بموجب سجل تجاري رقم (${commercialRegistry}) الصادر من ${defaultValues.registryIssuePlace} بتاريخ ${defaultValues.registryIssueDate} الرقم الضريبي (${taxNumber})، وعنوانها في مدينة ${defaultValues.city} ص ب ${defaultValues.poBox} الرمز البريدي ${defaultValues.postalCode}، البريد الالكتروني (${defaultValues.email}) : جوال ( ${clientPhone}) ويمثله في التواقيع على هذا العقد الاستاذ / ${defaultValues.representative} - بصفته ${defaultValues.representativeTitle} ونشار اليه في هذا العقد ب(الطرف الثاني)`;
 
         return text;
       }
@@ -5661,10 +6309,14 @@
           result = result.replace(/\{SECOND_PARTY\}/g, clientName);
           result = result.replace(/\{CLIENT_NAME\}/g, clientName);
 
-          // 2. "Second Party (....)" pattern
-          result = result.replace(/الطرف الثاني\s*\([^)]+\)/g, `الطرف الثاني (${clientName})`);
+          // 2. "الطرف الثاني (NAME)" pattern - with parentheses
+          result = result.replace(/الطرف الثاني\s*\([^)]+\)/g, `الطرف الثاني ${clientName}`);
 
-          // 3. "Second Party : ...." pattern (dotted lines)
+          // 3. "الطرف الثاني NAME وجنسيتها" pattern - direct name without parentheses
+          // This replaces any text between "الطرف الثاني" and "وجنسيتها" with the client name
+          result = result.replace(/الطرف الثاني\s+[^\u0648]+\s*وجنسيتها/g, `الطرف الثاني ${clientName} وجنسيتها`);
+
+          // 4. "Second Party : ......." pattern (dotted lines)
           result = result.replace(/الطرف الثاني\s*[:]\s*[.\-_]{3,}/g, `الطرف الثاني : ${clientName}`);
         }
 
@@ -5829,7 +6481,7 @@
               if (term.content && term.content.trim().startsWith('<')) {
                 isRich = true;
                 const contentWithDates = replaceDatePlaceholders(term.content);
-                addedContent += '\n' + contentWithDates;
+                addedContent += contentWithDates;
               }
 
               // Look for sub-items
@@ -5854,13 +6506,13 @@
 
                     // Append the item
                     // Auto-numbering: 1. Option...
-                    addedContent += '\n' + (subIndex + 1) + '. ' + val;
+                    addedContent += '<br>' + (subIndex + 1) + '. ' + val;
                   });
                 }
               } else if (!isRich) {
                 // Fallback if no sub-container but legacy state exists (and not rich)
                 if (uiState[id] && uiState[id].selected) {
-                  addedContent += '\n' + uiState[id].selected;
+                  addedContent += '<br>' + uiState[id].selected;
                 }
               }
 
@@ -5873,10 +6525,9 @@
             }
           }
 
-          // Join with single line break
-          // This ensures terms are on separate lines for the splitter, 
-          // but avoids adding extra visual gaps if the terms themselves are HTML blocks.
-          let merged = mergedParts.join('\n').trim();
+          // Join terms together preserving their formatting
+          // HTML content already has proper spacing, so we join without adding breaks
+          let merged = mergedParts.join('').trim();
 
           // Apply date replacement to the entire merged content as well
           merged = replaceDatePlaceholders(merged);
@@ -6255,29 +6906,83 @@
           activeHeader.classList.add(currentSortDirection);
         }
 
-        // Sort the data
+        // Sort the data with Smart Arabic Sorting (Ignores 'Al-' prefix)
         contractsData.sort((a, b) => {
           let aVal = a[column];
           let bVal = b[column];
 
-          // Handle null/undefined values
-          if (aVal == null) aVal = '';
-          if (bVal == null) bVal = '';
+          // Handle nulls
+          if (!aVal && !bVal) return 0;
+          if (!aVal) return 1;
+          if (!bVal) return -1;
 
-          // Convert to string for comparison
-          aVal = String(aVal).toLowerCase();
-          bVal = String(bVal).toLowerCase();
-
-          // Numeric comparison for price
-          if (column === 'total_price') {
-            aVal = parseFloat(aVal) || 0;
-            bVal = parseFloat(bVal) || 0;
+          // Numeric comparison
+          if (column === 'total_price' || (column === 'id' && !isNaN(parseFloat(aVal)))) {
+            const numA = parseFloat(aVal) || 0;
+            const numB = parseFloat(bVal) || 0;
+            return currentSortDirection === 'asc' ? numA - numB : numB - numA;
           }
 
-          // Compare
-          if (aVal < bVal) return currentSortDirection === 'asc' ? -1 : 1;
-          if (aVal > bVal) return currentSortDirection === 'asc' ? 1 : -1;
-          return 0;
+          // Smart String Sorting with Language Priority (Arabic First, English Last)
+          const getSortKey = (str) => {
+            if (!str) return '';
+
+            return String(str)
+              .trim()
+              // Normalize Unicode
+              .normalize('NFKD')
+              // Remove all diacritics (tashkeel, harakat, tanween, sukun, shadda, etc.)
+              .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '')
+              // Remove Arabic tatweel (elongation character)
+              .replace(/\u0640/g, '')
+              // Remove zero-width characters and other invisible chars
+              .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u2069]/g, '')
+              // Collapse multiple spaces to single space
+              .replace(/\s+/g, ' ')
+              // Remove definition articles (ال, آل) from start
+              .replace(/^(ال|آل)\s*/g, '')
+              // Unify all alef variants
+              .replace(/[أإآٱ]/g, 'ا')
+              // Unify yaa variants
+              .replace(/[ىئ]/g, 'ي')
+              // Unify ta marbuta and haa
+              .replace(/ة/g, 'ه')
+              // Unify hamza variants
+              .replace(/[ؤء]/g, 'و')
+              // Remove non-alphanumeric (keep Arabic, English, numbers, spaces)
+              .replace(/[^\u0600-\u06FFa-zA-Z0-9\s]/g, '')
+              .trim()
+              .toLowerCase();
+          };
+
+          // Detect language of the name
+          const isArabic = (text) => /[\u0600-\u06FF]/.test(text);
+          const isEnglish = (text) => /[a-zA-Z]/.test(text);
+
+          // Categorize names: 0=Arabic, 1=Mixed, 2=English/Other
+          const aValLang = isArabic(aVal) ? 0 : (isEnglish(aVal) ? 2 : 1);
+          const bValLang = isArabic(bVal) ? 0 : (isEnglish(bVal) ? 2 : 1);
+
+          // First, sort by language category (Arabic=0, Mixed=1, English/Other=2)
+          if (aValLang !== bValLang) {
+            return currentSortDirection === 'asc'
+              ? aValLang - bValLang
+              : bValLang - aValLang;
+          }
+
+          // Within same language category, sort alphabetically
+          const keyA = getSortKey(aVal);
+          const keyB = getSortKey(bVal);
+
+          // Use appropriate locale for comparison
+          const locale = aValLang === 0 ? 'ar' : 'en';
+          const cmp = keyA.localeCompare(keyB, locale, {
+            sensitivity: 'base',
+            numeric: true,
+            ignorePunctuation: true
+          });
+
+          return currentSortDirection === 'asc' ? cmp : -cmp;
         });
 
         // Re-render the table using the same logic as loadContracts
@@ -6300,27 +7005,29 @@
           const toDate = formatDate(c.to_date);
 
           tr.innerHTML = `
-        <td>${c.id || '-'}</td>
-        <td>${c.second_party || ''}</td>
-        <td>${c.service_name || ''}</td>
-        <td>${fromDate} → ${toDate}</td>
-        <td>${c.total_price || 0}</td>
-        <td>${c.manager || ''}</td>
-        <td>${c.collector || ''}</td>
-        <td>
+        <td style="white-space: nowrap;">${c.id || '-'}</td>
+        <td style="white-space: nowrap;">${c.second_party || ''}</td>
+        <td style="white-space: nowrap;">${c.service_name || ''}</td>
+        <td style="white-space: nowrap;">${fromDate} → ${toDate}</td>
+        <td style="white-space: nowrap;">${c.total_price || 0}</td>
+        <td style="white-space: nowrap;">${c.manager || ''}</td>
+        <td style="white-space: nowrap;">${c.collector || ''}</td>
+        <td style="white-space: nowrap;">
             <span class="chip ${c.status === 'active' ? 'active' : (c.status === 'pending' ? 'pending' : 'expired')}">
             ${c.status === 'active' ? 'نشط' : (c.status === 'pending' ? 'قيد التوقيع' : 'منتهي')}
             </span>
         </td>
-        <td>
-          <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
-              <button class="btn" onclick="openView('${c.id}')" title="عرض العقد النهائي">عرض</button>
-              <button class="btn" onclick="openEdit('${c.id}')" title="تعديل العقد">تعديل</button>
+        <td style="white-space: nowrap;">
+          <div style="display:inline-flex; gap:3px; align-items:center; flex-wrap:nowrap;">
+              <button class="btn" onclick="openView('${c.id}')" title="عرض العقد النهائي" style="padding:4px 8px; font-size:0.85em;">عرض</button>
+              <button class="btn" onclick="openEdit('${c.id}')" title="تعديل العقد" style="padding:4px 8px; font-size:0.85em;">تعديل</button>
+              <button class="btn" onclick="openRenew('${c.id}')" title="تجديد العقد" style="padding:4px 8px; font-size:0.85em; background:#10b981; color:white; border:none;">تجديد</button>
               <button class="btn small" onclick="updateStatus('${c.id}','active')" title="تفعيل">✅</button>
               <button class="btn small" onclick="updateStatus('${c.id}','pending')" title="قيد التوقيع">⏳</button>
               <button class="btn small" onclick="updateStatus('${c.id}','expired')" title="إنهاء">🛑</button>
+              ${containerMapLink ? `<a href="https://www.google.com/maps?q=${c.container_location}" target="_blank" style="font-size:0.75em; margin-right:4px; white-space:nowrap;">📍</a>` : ''}
+              <button class="btn small" onclick="deleteContract('${c.id}')" title="حذف العقد" style="background:#ef4444; color:white; border:none;">🗑️</button>
           </div>
-          <div style="margin-top:6px; font-size:0.8em;">${containerMapLink}</div>
         </td>
       `;
           tbody.appendChild(tr);
@@ -6341,6 +7048,491 @@
       // Initialize size from localStorage
       const savedSize = localStorage.getItem('pageSize');
       if (savedSize) window.setPageSize(savedSize);
+
+      // ===== ENHANCED REPORTS FUNCTIONALITY =====
+
+      let currentEntityType = null; // 'collectors', 'marketers', 'clients'
+      let currentEntities = []; // Current list of entities
+      let currentEntityDetail = null; // Current entity detail data
+
+      // View Switcher - Handle nav buttons
+      document.querySelectorAll('.nav button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const view = btn.getAttribute('data-view');
+
+          // Update active state
+          document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          // Show/hide sections
+          if (view === 'contracts') {
+            $('contractsArea').style.display = 'block';
+            $('reportsArea').style.display = 'none';
+          } else if (view === 'reports') {
+            $('contractsArea').style.display = 'none';
+            $('reportsArea').style.display = 'block';
+            showOverview(); // Show overview by default
+          }
+        });
+      });
+
+      // Report Section Buttons
+      if ($('showCollectorsBtn')) {
+        $('showCollectorsBtn').addEventListener('click', () => {
+          setActiveReportBtn('showCollectorsBtn');
+          showEntitySelection('collectors');
+        });
+      }
+
+      if ($('showMarketersBtn')) {
+        $('showMarketersBtn').addEventListener('click', () => {
+          setActiveReportBtn('showMarketersBtn');
+          showEntitySelection('marketers');
+        });
+      }
+
+      if ($('showClientsBtn')) {
+        $('showClientsBtn').addEventListener('click', () => {
+          setActiveReportBtn('showClientsBtn');
+          showEntitySelection('clients');
+        });
+      }
+
+      if ($('showOverviewBtn')) {
+        $('showOverviewBtn').addEventListener('click', () => {
+          setActiveReportBtn('showOverviewBtn');
+          showOverview();
+        });
+      }
+
+      if ($('backToEntitiesBtn')) {
+        $('backToEntitiesBtn').addEventListener('click', () => {
+          if (currentEntityType) {
+            showEntitySelection(currentEntityType);
+          }
+        });
+      }
+
+      // Set active button in reports section
+      function setActiveReportBtn(btnId) {
+        ['showCollectorsBtn', 'showMarketersBtn', 'showClientsBtn', 'showOverviewBtn'].forEach(id => {
+          const btn = $(id);
+          if (btn) {
+            btn.classList.remove('primary');
+            btn.classList.add('btn');
+          }
+        });
+        const activeBtn = $(btnId);
+        if (activeBtn) {
+          activeBtn.classList.add('primary');
+        }
+      }
+
+      // Show Overview Section
+      function showOverview() {
+        if ($('overviewSection')) $('overviewSection').style.display = 'block';
+        if ($('entitySelectionSection')) $('entitySelectionSection').style.display = 'none';
+        if ($('entityDetailSection')) $('entityDetailSection').style.display = 'none';
+
+        // Load overview data - this will be handled by existing logic
+        // The existing code should populate the overview stats
+      }
+
+      // Show Entity Selection
+      async function showEntitySelection(type) {
+        currentEntityType = type;
+
+        if ($('overviewSection')) $('overviewSection').style.display = 'none';
+        if ($('entitySelectionSection')) $('entitySelectionSection').style.display = 'block';
+        if ($('entityDetailSection')) $('entityDetailSection').style.display = 'none';
+
+        // Update title
+        const titles = {
+          'collectors': 'اختر المحصل',
+          'marketers': 'اختر المسوق',
+          'clients': 'اختر العميل / الطرف الثاني'
+        };
+        if ($('entitySectionTitle')) {
+          $('entitySectionTitle').textContent = titles[type] || 'اختر';
+        }
+
+        // Load entities
+        await loadEntities(type);
+      }
+
+      // Load Entities List
+      async function loadEntities(type) {
+        try {
+          const endpoints = {
+            'collectors': '/reports/collectors',
+            'marketers': '/reports/marketers',
+            'clients': '/reports/clients'
+          };
+
+          const data = await apiFetch(endpoints[type]);
+          currentEntities = data;
+
+          renderEntityCards(data, type);
+        } catch (err) {
+          console.error('Error loading entities:', err);
+          alert('خطأ في تحميل البيانات');
+        }
+      }
+
+      // Render Entity Cards
+      function renderEntityCards(entities, type) {
+        const grid = $('entityCardsGrid');
+        if (!grid) return;
+
+        grid.innerHTML = '';
+
+        if (!entities || entities.length === 0) {
+          grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #9ca3af;">لا توجد بيانات</div>';
+          return;
+        }
+
+        entities.forEach(entity => {
+          const card = document.createElement('div');
+          const entityName = entity.collector || entity.manager || entity.second_party || 'غير محدد';
+          const contractCount = entity.contract_count || 0;
+          const totalValue = parseFloat(entity.total_value || 0).toLocaleString('ar-SA');
+          const activeCount = entity.active_count || 0;
+
+          card.style.cssText = `
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+          `;
+
+          card.innerHTML = `
+            <div style="display: flex; align-items: start; justify-content: space-between; margin-bottom: 1rem;">
+              <div style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                ${type === 'collectors' ? '💰' : (type === 'marketers' ? '📈' : '🏢')}
+              </div>
+              <div style="background: #f0fdf4; color: #059669; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600;">
+                ${activeCount} نشط
+              </div>
+            </div>
+            <h4 style="margin: 0 0 0.5rem 0; font-size: 1.125rem; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${entityName}</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #64748b; font-size: 0.875rem;">عدد العقود</span>
+                <span style="color: #0f172a; font-weight: 600; font-size: 1.125rem;">${contractCount}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #64748b; font-size: 0.875rem;">إجمالي القيمة</span>
+                <span style="color: #6366f1; font-weight: 700; font-size: 1rem;">${totalValue} ر.س</span>
+              </div>
+            </div>
+          `;
+
+          card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-4px)';
+            card.style.boxShadow = '0 10px 25px rgba(99, 102, 241, 0.2)';
+            card.style.borderColor = '#6366f1';
+          });
+
+          card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0)';
+            card.style.boxShadow = 'none';
+            card.style.borderColor = '#e5e7eb';
+          });
+
+          card.addEventListener('click', () => {
+            loadEntityDetail(type, entityName);
+          });
+
+          grid.appendChild(card);
+        });
+
+        // Add search functionality
+        const searchInput = $('entitySearchInput');
+        if (searchInput) {
+          searchInput.oninput = () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            const cards = grid.querySelectorAll('div');
+            cards.forEach(card => {
+              const text = card.textContent.toLowerCase();
+              card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+            });
+          };
+        }
+      }
+
+      // Load Entity Detail
+      async function loadEntityDetail(type, name) {
+        try {
+          const endpoints = {
+            'collectors': `/reports/collectors/${encodeURIComponent(name)}`,
+            'marketers': `/reports/marketers/${encodeURIComponent(name)}`,
+            'clients': `/reports/clients/${encodeURIComponent(name)}`
+          };
+
+          const data = await apiFetch(endpoints[type]);
+          currentEntityDetail = data;
+
+          showEntityDetail(data);
+        } catch (err) {
+          console.error('Error loading entity detail:', err);
+          alert('خطأ في تحميل تفاصيل التقرير');
+        }
+      }
+
+      // Show Entity Detail
+      function showEntityDetail(data) {
+        if ($('overviewSection')) $('overviewSection').style.display = 'none';
+        if ($('entitySelectionSection')) $('entitySelectionSection').style.display = 'none';
+        if ($('entityDetailSection')) $('entityDetailSection').style.display = 'block';
+
+        // Update header
+        const typeLabels = {
+          'collector': 'محصل',
+          'marketer': 'مسوق',
+          'client': 'عميل / طرف ثاني'
+        };
+
+        if ($('entityDetailName')) $('entityDetailName').textContent = data.entityName || '';
+        if ($('entityDetailType')) $('entityDetailType').textContent = typeLabels[data.entityType] || '';
+
+        // Update statistics
+        const stats = data.statistics || {};
+        if ($('entityStatTotalContracts')) $('entityStatTotalContracts').textContent = stats.total_contracts || 0;
+        if ($('entityStatActiveContracts')) $('entityStatActiveContracts').textContent = stats.active_contracts || 0;
+        if ($('entityStatTotalValue')) $('entityStatTotalValue').textContent = parseFloat(stats.total_value || 0).toLocaleString('ar-SA') + ' ر.س';
+        if ($('entityStatMonthlyRevenue')) $('entityStatMonthlyRevenue').textContent = parseFloat(stats.monthly_revenue || 0).toLocaleString('ar-SA') + ' ر.س';
+
+        // Render contracts table
+        renderEntityContracts(data.contracts || []);
+      }
+
+      // Render Entity Contracts Table
+      function renderEntityContracts(contracts) {
+        const tbody = $('entityContractsTbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (!contracts || contracts.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem; color: #9ca3af;">لا توجد عقود</td></tr>';
+          return;
+        }
+
+        contracts.forEach(c => {
+          const tr = document.createElement('tr');
+          const fromDate = formatDate(c.from_date);
+          const toDate = formatDate(c.to_date);
+          const statusText = c.status === 'active' ? 'نشط' : (c.status === 'pending' ? 'قيد التوقيع' : 'منتهي');
+          const statusClass = c.status === 'active' ? 'active' : (c.status === 'pending' ? 'pending' : 'expired');
+
+          tr.innerHTML = `
+            <td style="white-space: nowrap;">${c.id || '-'}</td>
+            <td style="white-space: nowrap;">${c.second_party || c.client_name || '-'}</td>
+            <td style="white-space: nowrap;">${c.service_name || '-'}</td>
+            <td style="white-space: nowrap;">${fromDate}</td>
+            <td style="white-space: nowrap;">${toDate}</td>
+            <td style="white-space: nowrap;">${parseFloat(c.monthly_fee || 0).toLocaleString('ar-SA')}</td>
+            <td style="white-space: nowrap;">${parseFloat(c.total_price || 0).toLocaleString('ar-SA')}</td>
+            <td style="white-space: nowrap;">
+              <span class="chip ${statusClass}">${statusText}</span>
+            </td>
+            <td style="white-space: nowrap;">
+              <div style="display: inline-flex; gap: 4px;">
+                <button class="btn small" onclick="openView('${c.id}')" title="عرض" style="padding: 4px 8px; font-size: 0.85em;">عرض</button>
+                <button class="btn small" onclick="openEdit('${c.id}')" title="تعديل" style="padding: 4px 8px; font-size: 0.85em;">تعديل</button>
+              </div>
+            </td>
+          `;
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      // Export Entity Report to Excel
+      if ($('exportEntityReportBtn')) {
+        $('exportEntityReportBtn').addEventListener('click', () => {
+          if (!currentEntityDetail) {
+            alert('لا توجد بيانات للتصدير');
+            return;
+          }
+
+          exportEntityToExcel(currentEntityDetail);
+        });
+      }
+
+      // Export function (using existing exportToExcel if available, or create simple version)
+      function exportEntityToExcel(data) {
+        const entityName = data.entityName || 'تقرير';
+        const contracts = data.contracts || [];
+
+        // Create CSV content
+        const headers = ['رقم العقد', 'العميل', 'الخدمة', 'من تاريخ', 'إلى تاريخ', 'الدفعة الشهرية', 'القيمة الإجمالية', 'الحالة', 'المسوق', 'المحصل'];
+        let csv = headers.join(',') + '\n';
+
+        contracts.forEach(c => {
+          const row = [
+            c.id || '',
+            (c.second_party || c.client_name || '').replace(/,/g, ' '),
+            (c.service_name || '').replace(/,/g, ' '),
+            formatDate(c.from_date),
+            formatDate(c.to_date),
+            c.monthly_fee || 0,
+            c.total_price || 0,
+            c.status === 'active' ? 'نشط' : (c.status === 'pending' ? 'قيد التوقيع' : 'منتهي'),
+            (c.manager || '').replace(/,/g, ' '),
+            (c.collector || '').replace(/,/g, ' ')
+          ];
+          csv += row.join(',') + '\n';
+        });
+
+        // Download
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `تقرير_${entityName}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+      }
+
+      // Helper function to format dates
+      function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      // Load Overview Data
+      async function loadOverviewData() {
+        try {
+          // Load all contracts to calculate overview stats
+          const contracts = await apiFetch('/contracts');
+
+          // Calculate totals
+          let totalContracts = contracts.length;
+          let totalRevenue = 0;
+          let activeCount = 0;
+          let pendingCount = 0;
+          let expiredCount = 0;
+          let clientsSet = new Set();
+
+          contracts.forEach(c => {
+            totalRevenue += parseFloat(c.total_price || 0);
+            if (c.status === 'active') activeCount++;
+            if (c.status === 'pending') pendingCount++;
+            if (c.status === 'expired') expiredCount++;
+            if (c.second_party) clientsSet.add(c.second_party);
+          });
+
+          const avgContract = totalContracts > 0 ? totalRevenue / totalContracts : 0;
+
+          // Update overview cards
+          if ($('reportTotalContracts')) $('reportTotalContracts').textContent = totalContracts;
+          if ($('reportTotalRevenue')) $('reportTotalRevenue').textContent = Math.round(totalRevenue).toLocaleString('ar-SA');
+          if ($('reportTotalClients')) $('reportTotalClients').textContent = clientsSet.size;
+          if ($('reportAvgContract')) $('reportAvgContract').textContent = Math.round(avgContract).toLocaleString('ar-SA');
+          if ($('reportActiveCount')) $('reportActiveCount').textContent = activeCount;
+          if ($('reportPendingCount')) $('reportPendingCount').textContent = pendingCount;
+          if ($('reportExpiredCount')) $('reportExpiredCount').textContent = expiredCount;
+
+          // Load aggregated data for tables
+          await loadOverviewTables();
+        } catch (err) {
+          console.error('Error loading overview data:', err);
+        }
+      }
+
+      // Load Overview Tables
+      async function loadOverviewTables() {
+        try {
+          // Load marketers
+          const marketers = await apiFetch('/reports/marketers');
+          const managerTbody = $('managerStatsTbody');
+          if (managerTbody) {
+            managerTbody.innerHTML = '';
+            marketers.forEach(m => {
+              const tr = document.createElement('tr');
+              tr.style.cursor = 'pointer';
+              tr.innerHTML = `
+                <td>${m.manager || '-'}</td>
+                <td>${m.contract_count || 0}</td>
+                <td>${Math.round(m.total_value || 0).toLocaleString('ar-SA')}</td>
+                <td>${Math.round(m.monthly_revenue || 0).toLocaleString('ar-SA')}</td>
+                <td><button class="btn small" onclick="viewMarketerReport('${m.manager}')" style="padding: 4px 8px; font-size: 0.85em;">عرض التفاصيل</button></td>
+              `;
+              managerTbody.appendChild(tr);
+            });
+          }
+
+          // Load collectors
+          const collectors = await apiFetch('/reports/collectors');
+          const collectorTbody = $('collectorStatsTbody');
+          if (collectorTbody) {
+            collectorTbody.innerHTML = '';
+            collectors.forEach(c => {
+              const tr = document.createElement('tr');
+              tr.style.cursor = 'pointer';
+              tr.innerHTML = `
+                <td>${c.collector || '-'}</td>
+                <td>${c.contract_count || 0}</td>
+                <td>${Math.round(c.total_value || 0).toLocaleString('ar-SA')}</td>
+                <td>${Math.round(c.monthly_revenue || 0).toLocaleString('ar-SA')}</td>
+                <td><button class="btn small" onclick="viewCollectorReport('${c.collector}')" style="padding: 4px 8px; font-size: 0.85em;">عرض التفاصيل</button></td>
+              `;
+              collectorTbody.appendChild(tr);
+            });
+          }
+
+          // Load top clients
+          const clients = await apiFetch('/reports/clients');
+          const topClients = clients.sort((a, b) => (b.total_value || 0) - (a.total_value || 0)).slice(0, 5);
+          const clientsTbody = $('topClientsTbody');
+          if (clientsTbody) {
+            clientsTbody.innerHTML = '';
+            topClients.forEach(c => {
+              const tr = document.createElement('tr');
+              tr.style.cursor = 'pointer';
+              tr.innerHTML = `
+                <td>${c.second_party || '-'}</td>
+                <td>${c.contract_count || 0}</td>
+                <td>${Math.round(c.total_value || 0).toLocaleString('ar-SA')}</td>
+                <td><button class="btn small" onclick="viewClientReport('${c.second_party}')" style="padding: 4px 8px; font-size: 0.85em;">عرض التفاصيل</button></td>
+              `;
+              clientsTbody.appendChild(tr);
+            });
+          }
+        } catch (err) {
+          console.error('Error loading overview tables:', err);
+        }
+      }
+
+      // Global functions to view reports from overview tables
+      window.viewMarketerReport = function (name) {
+        setActiveReportBtn('showMarketersBtn');
+        loadEntityDetail('marketers', name);
+      };
+
+      window.viewCollectorReport = function (name) {
+        setActiveReportBtn('showCollectorsBtn');
+        loadEntityDetail('collectors', name);
+      };
+
+      window.viewClientReport = function (name) {
+        setActiveReportBtn('showClientsBtn');
+        loadEntityDetail('clients', name);
+      };
+
+      // Update showOverview to load data
+      const originalShowOverview = showOverview;
+      showOverview = function () {
+        originalShowOverview();
+        loadOverviewData();
+      };
+
 
     }); // DOMContentLoaded
   </script>
@@ -6380,13 +7572,22 @@
         style="flex: 1; background: #ffffff; overflow: auto; display: flex; justify-content: center; padding: 20px; position: relative;">
 
         <!-- Doc content - exact copy from pdf-sign.html -->
+        <!-- This control the size of the print view for print the conract -->
+        <!-- 
+          FOR PRE-STAMPED PAPER: Adjust the padding values below
+          Current: padding: 25mm 15mm (top/bottom 25mm, left/right 15mm)
+          
+          Example for 20mm stamped header + 15mm footer:
+          Change to: padding: 45mm 15mm 40mm 15mm
+          (top 45mm, right 15mm, bottom 40mm, left 15mm)
+        -->
         <div id="doc-content"
-          style="background: #fff; width: 210mm; min-height: 296.5mm; padding: 20mm; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: relative; box-sizing: border-box; font-size: 14px; line-height: 1.6; display: block; background-image: linear-gradient(to bottom, transparent 0mm, transparent 297mm, rgba(0, 0, 0, 0.05) 297mm, rgba(0, 0, 0, 0.05) 297.5mm, transparent 297.5mm); background-size: 100% 297mm; background-repeat: repeat-y;">
+          style="background: #fff; width: 210mm; min-height: 296.5mm; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: relative; box-sizing: border-box; line-height: 1.5; display: block; background-image: linear-gradient(to bottom, transparent 0mm, transparent 297mm, rgba(0, 0, 0, 0.05) 297mm, rgba(0, 0, 0, 0.05) 297.5mm, transparent 297.5mm); background-size: 100% 297mm; background-repeat: repeat-y;">
 
-          <div class="contract-header" style="flex-direction: column; align-items: stretch; margin-bottom:20px;">
+          <div class="contract-header" style="flex-direction: column; align-items: stretch; margin-bottom:25px;">
             <!-- Top Row: Manager Info on Left -->
             <div class="top-info-row" style="display:flex; justify-content: flex-end; width:100%; margin-bottom: 25px;">
-              <div style="text-align: left; font-size: 0.95em; color: #444; line-height: 1.6;">
+              <div style="text-align: left; font-size: 0.95em; color: #444; line-height: 1.5;">
                 <!-- <div style="direction:ltr; text-align:left;"> <span id="v-date-top"></span></div> -->
                 <div>محصل / <span id="v-collector"></span></div>
                 <div>مسوق / <span id="v-manager"></span></div>
@@ -6415,14 +7616,14 @@
           </div>
 
 
-          <div class="contract-section signature-section" style="display: flex; justify-content: space-between;">
+          <div id="contract-signatures" class="contract-section signature-section"
+            style="display: flex; justify-content: space-between; margin-top: 25px;">
             <div style="text-align: center; width: 200px;">
               <p><strong>الطرف الأول</strong></p>
               <p>شركة بفت للمقاولات</p>
               <div style="text-align: right; width: 200px;">
                 <p><strong>التوقيع:</strong></p>
                 <p><strong>الختم:</strong></p>
-                <br><br>
               </div>
             </div>
             <div style="text-align: center; width: 200px;">
