@@ -1,48 +1,28 @@
-name: Node.js CI
+# Build public and deploy to GitHub Pages (publishes public/ as static site)
+
+name: Deploy public to GitHub Pages
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
-    # Use a single Node version (change to the one you prefer)
     strategy:
       matrix:
         node-version: [20.x]
 
-    # Start a MySQL service container so the app can connect to a DB on localhost:3306
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: rootpass
-          MYSQL_DATABASE: baft
-          MYSQL_USER: baft
-          MYSQL_PASSWORD: baftpass
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-
-    # Provide DB connection info to your steps; replace these if your app expects different names
-    env:
-      DB_HOST: 127.0.0.1
-      DB_PORT: 3306
-      DB_USER: baft
-      DB_PASSWORD: baftpass
-      DB_NAME: baft
-      PORT: 3000
-
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
@@ -50,69 +30,27 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
 
+    # Install dependencies inside public (where your package.json for frontend lives)
     - name: Install public dependencies
       run: npm ci
       working-directory: ./public
 
+    # Build the frontend if you have a build step
     - name: Build public (if present)
       run: npm run build --if-present
       working-directory: ./public
 
+    # Optional: run tests in public (skips if none)
     - name: Run tests in public (if any)
       run: npm run test --if-present
       working-directory: ./public
 
-    - name: Wait for MySQL to be accepting connections
-      run: |
-        echo "Waiting up to 60s for MySQL on ${DB_HOST}:${DB_PORT}..."
-        for i in $(seq 1 60); do
-          # bash built-in tcp check
-          if (echo > /dev/tcp/${DB_HOST}/${DB_PORT}) >/dev/null 2>&1; then
-            echo "MySQL is accepting connections"
-            sleep 2
-            break
-          fi
-          echo "Waiting for MySQL... (${i})"
-          sleep 1
-        done
-        # final check
-        if ! (echo > /dev/tcp/${DB_HOST}/${DB_PORT}) >/dev/null 2>&1; then
-          echo "MySQL did not become available in time" >&2
-          # show docker service logs for debugging (best-effort)
-          docker logs $(docker ps --filter ancestor=mysql:8.0 --format '{{.ID}}') || true
-          exit 1
-        fi
+    # Upload the static files in public/ as the pages artifact
+    - name: Upload artifact for GitHub Pages
+      uses: actions/upload-pages-artifact@v1
+      with:
+        path: ./public
 
-    - name: Create admin (public) — capture logs
-      run: |
-        echo "Running create-admin and saving logs to /tmp/create-admin.log"
-        npm run create-admin > /tmp/create-admin.log 2>&1 || true
-        echo "=== create-admin log ==="
-        sed -n '1,400p' /tmp/create-admin.log || true
-        # Fail the job if create-admin returned a non-zero exit code (optional)
-        if grep -q "Error" /tmp/create-admin.log; then
-          echo "create-admin produced errors; inspect the log above."
-          # Uncomment the next line to make the job fail on create-admin errors:
-          # exit 1
-        fi
-      working-directory: ./public
-
-    - name: Start server (background) and check index
-      run: |
-        echo "Starting server on PORT=${PORT}"
-        export PORT=${PORT}
-        nohup npm start &>/tmp/server.log &
-        # wait up to 30s for server to start
-        for i in {1..30}; do
-          if curl -sSf http://localhost:${PORT} >/dev/null; then
-            echo "Server is up"
-            break
-          fi
-          sleep 1
-        done
-        if ! curl -I http://localhost:${PORT} >/dev/null; then
-          echo "Failed to fetch page — server logs:"
-          tail -n 200 /tmp/server.log || true
-          exit 1
-        fi
-      working-directory: ./public
+    # Deploy to GitHub Pages
+    - name: Deploy to GitHub Pages
+      uses: actions/deploy-pages@v1
