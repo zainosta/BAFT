@@ -11,7 +11,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -29,8 +28,14 @@ jobs:
         cache: 'npm'
 
     # OPTIONAL: install root deps only if you have a package.json at the repository root
-    - name: Install root dependencies
-      run: npm ci
+    - name: Install root dependencies (if present)
+      run: |
+        if [ -f package.json ]; then
+          npm ci
+          npm run test --if-present
+        else
+          echo "No root package.json, skipping root install/test"
+        fi
 
     - name: Install public dependencies
       run: npm ci
@@ -40,8 +45,8 @@ jobs:
       run: npm run build --if-present
       working-directory: ./public
 
-    - name: Run tests (if any) in public
-      run: npm test
+    - name: Run tests in public (if any)
+      run: npm run test --if-present
       working-directory: ./public
 
     - name: Create admin (public)
@@ -51,11 +56,12 @@ jobs:
     - name: Start server (background) and check index
       run: |
         # set port used by your start script (adjust if needed)
-        PORT=4000 npm start &>/tmp/server.log &
+        export PORT=3000
+        nohup npm start &>/tmp/server.log &
 
         # wait for the server to respond, up to ~30s
         for i in {1..30}; do
-          if curl -sSf http://localhost:4000 >/dev/null; then
+          if curl -sSf http://localhost:3000 >/dev/null; then
             echo "Server is up"
             break
           fi
@@ -63,5 +69,5 @@ jobs:
         done
 
         # show response headers for verification, or show logs if fail
-        curl -I http://localhost:4000 || (echo "Failed to fetch page — server logs:" && tail -n 200 /tmp/server.log && exit 1)
+        curl -I http://localhost:3000 || (echo "Failed to fetch page — server logs:" && tail -n 200 /tmp/server.log && exit 1)
       working-directory: ./public
