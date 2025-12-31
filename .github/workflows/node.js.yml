@@ -1,5 +1,4 @@
 # Build public and deploy to GitHub Pages (publishes public/ as static site)
-
 name: Deploy public to GitHub Pages
 
 on:
@@ -45,12 +44,12 @@ jobs:
       run: npm run test --if-present
       working-directory: ./public
 
-    # Upload the static files in public/ as the pages artifact
+    # Upload the static files in public/ as the pages artifact (non-deprecated)
     - name: Upload artifact for GitHub Pages
-      uses: actions/upload-pages-artifact@v2
+      uses: actions/upload-pages-artifact@v3
       with:
         path: ./public
 
-    # Deploy to GitHub Pages
+    # Deploy to GitHub Pages (non-deprecated)
     - name: Deploy to GitHub Pages
-      uses: actions/deploy-pages@v1
+      uses: actions/deploy-pages@v4
