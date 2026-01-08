@@ -11,8 +11,81 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 const app = express();
+const http = require('http').Server(app);
+const io = require('socket.io')(http, {
+    cors: { origin: "*" }
+});
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+// Real-time Socket logic
+const connectedUsers = new Map(); // username -> Set of socketIds
+
+io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+
+    socket.on('register', (username) => {
+        if (username) {
+            if (!connectedUsers.has(username)) {
+                connectedUsers.set(username, new Set());
+            }
+            connectedUsers.get(username).add(socket.id);
+
+            // Link socket to username for disconnect
+            socket.currentUsername = username;
+
+            io.emit('update-users', Array.from(connectedUsers.keys()));
+            console.log(`User registered: ${username} (Socket: ${socket.id}, Total Sockets: ${connectedUsers.get(username).size})`);
+        }
+    });
+
+    socket.on('request-users', () => {
+        socket.emit('update-users', Array.from(connectedUsers.keys()));
+    });
+
+    socket.on('send-notification', (data) => {
+        // data: { targetUser, priority, duration, senderName, message }
+        console.log(`Notification from ${data.senderName} to ${data.targetUser}: ${data.message}`);
+
+        const targetSockets = connectedUsers.get(data.targetUser);
+        if (targetSockets && targetSockets.size > 0) {
+            targetSockets.forEach(socketId => {
+                io.to(socketId).emit('receive-notification', data);
+            });
+        } else {
+            console.log(`Target user ${data.targetUser} not found or offline.`);
+        }
+    });
+
+    socket.on('logout', () => {
+        const username = socket.currentUsername;
+        if (username && connectedUsers.has(username)) {
+            const userSockets = connectedUsers.get(username);
+            userSockets.delete(socket.id);
+            if (userSockets.size === 0) {
+                connectedUsers.delete(username);
+                console.log(`User logged out: ${username}`);
+            }
+            io.emit('update-users', Array.from(connectedUsers.keys()));
+        }
+    });
+
+    socket.on('disconnect', () => {
+        const username = socket.currentUsername;
+        if (username && connectedUsers.has(username)) {
+            const userSockets = connectedUsers.get(username);
+            userSockets.delete(socket.id);
+
+            if (userSockets.size === 0) {
+                connectedUsers.delete(username);
+                console.log(`User completely offline: ${username}`);
+            } else {
+                console.log(`User ${username} closed one tab. (${userSockets.size} remaining)`);
+            }
+            io.emit('update-users', Array.from(connectedUsers.keys()));
+        }
+    });
+});
 
 // Middleware
 app.use(cors());
@@ -130,8 +203,24 @@ app.post('/api/login', async (req, res) => {
         if (!user || !(await bcrypt.compare(password, user.password_hash))) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
+
+        // Force 'admin' role for the main admin user (Fix for legacy schema or missing role)
+        if (user.username === 'admin') {
+            user.role = 'admin';
+        }
+
         const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
         res.json({ token, user: { id: user.id, username: user.username, role: user.role, display_name: user.display_name } });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Users (List) - Admin Only
+app.get('/api/users', authMiddleware, roleCheck(['admin']), async (req, res) => {
+    try {
+        const [rows] = await pool.execute('SELECT id, username, role, display_name, created_at FROM users ORDER BY created_at DESC');
+        res.json(rows);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -144,6 +233,59 @@ app.post('/api/users', async (req, res) => {
         const hash = await bcrypt.hash(password, 10);
         await pool.execute('INSERT INTO users (username, password_hash, role, display_name) VALUES (?, ?, ?, ?)', [username, hash, role, display_name]);
         res.json({ message: 'User created' });
+    } catch (err) {
+        // Self-healing: Catch "Data truncated" (Code 1265) or generic string error
+        if (err.message.includes('truncated') || err.message.code === 'ER_TRUNCATED_WRONG_VALUE_FOR_FIELD') {
+            console.log('Detected truncation error. Attempting to fix "role" column schema...');
+            try {
+                await pool.execute("ALTER TABLE users MODIFY COLUMN role VARCHAR(255) DEFAULT 'staff'");
+                console.log('Schema fixed. Retrying insert...');
+                const hash = await bcrypt.hash(password, 10);
+                await pool.execute('INSERT INTO users (username, password_hash, role, display_name) VALUES (?, ?, ?, ?)', [username, hash, role, display_name]);
+                return res.json({ message: 'User created (after schema fix)' });
+            } catch (fixErr) {
+                console.error('Failed to fix schema or retry:', fixErr);
+                return res.status(500).json({ message: 'Failed to fix database schema: ' + fixErr.message });
+            }
+        }
+        console.error('Create user error:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// DEBUG: Reset Users Table (Forcing schema fix via DROP/CREATE)
+// Only callable if you are logged in as admin (which we fixed above)
+app.post('/api/debug/reset-users', authMiddleware, roleCheck(['admin']), async (req, res) => {
+    try {
+        console.log('RESETTING USERS TABLE...');
+        await pool.execute('DROP TABLE IF EXISTS users');
+        await pool.execute(`
+            CREATE TABLE users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) NOT NULL UNIQUE,
+                password_hash VARCHAR(255) NOT NULL,
+                role VARCHAR(255) DEFAULT 'staff',
+                display_name VARCHAR(100),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        // Re-create default admin
+        const hash = await bcrypt.hash('admin123', 10);
+        await pool.execute("INSERT INTO users (username, password_hash, role, display_name) VALUES ('admin', ?, 'admin', 'System Admin')", [hash]);
+
+        res.json({ message: 'Users table reset successfully. Default admin restored.' });
+    } catch (err) {
+        console.error('Reset table error:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Users (Delete) - Admin Only
+app.delete('/api/users/:id', authMiddleware, roleCheck(['admin']), async (req, res) => {
+    try {
+        const [result] = await pool.execute('DELETE FROM users WHERE id = ?', [req.params.id]);
+        if (result.affectedRows === 0) return res.status(404).json({ message: 'User not found' });
+        res.json({ message: 'User deleted' });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -216,6 +358,7 @@ app.get('/api/contracts', authMiddleware, async (req, res) => {
     if (availableColumns.includes('second_party')) cols.push('c.second_party');
     if (availableColumns.includes('client_email')) cols.push('c.client_email');
     if (availableColumns.includes('client_phone')) cols.push('c.client_phone');
+    if (availableColumns.includes('client_type')) cols.push('c.client_type');
     if (availableColumns.includes('collector')) cols.push('c.collector');
     if (availableColumns.includes('tax')) cols.push('c.tax');
     if (availableColumns.includes('parent_contract_id')) cols.push('c.parent_contract_id');
@@ -298,7 +441,7 @@ app.post('/api/contracts', authMiddleware, async (req, res) => {
     ];
 
     // Add optional fields if they exist in DB
-    const optional = ['duration', 'payment_type', 'first_party', 'second_party', 'client_email', 'client_phone', 'collector', 'tax', 'parent_contract_id'];
+    const optional = ['duration', 'payment_type', 'first_party', 'second_party', 'client_email', 'client_phone', 'client_type', 'collector', 'tax', 'parent_contract_id'];
     optional.forEach(f => {
         if (availableColumns.includes(f)) {
             fields.push(f);
@@ -334,7 +477,7 @@ app.put('/api/contracts/:id', authMiddleware, async (req, res) => {
     ];
 
     // Add optional fields to allowed list if they exist
-    const optional = ['duration', 'payment_type', 'first_party', 'second_party', 'client_email', 'client_phone', 'collector', 'tax', 'parent_contract_id'];
+    const optional = ['duration', 'payment_type', 'first_party', 'second_party', 'client_email', 'client_phone', 'client_type', 'collector', 'tax', 'parent_contract_id'];
     optional.forEach(f => {
         if (availableColumns.includes(f)) allowed.push(f);
     });
@@ -362,6 +505,10 @@ app.put('/api/contracts/:id', authMiddleware, async (req, res) => {
 
 // DELETE Contract
 app.delete('/api/contracts/:id', authMiddleware, async (req, res) => {
+    // Permission Check: Admin only
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Access denied: Admin role required to delete permissions' });
+    }
     const id = req.params.id;
 
     try {
@@ -836,7 +983,7 @@ app.get('/sign/:id/:token', (req, res) => {
 // Upload contract attachments
 app.post('/api/contracts/:id/attachments', attachmentUpload.array('files', 10), async (req, res) => {
     const { id } = req.params;
-    const { attachmentsData } = req.body; // Array of {fieldName, fieldType, textValue?, fileData?}
+    const { attachmentsData } = req.body;
 
     try {
         let attachments = [];
@@ -854,45 +1001,58 @@ app.post('/api/contracts/:id/attachments', attachmentUpload.array('files', 10), 
         const contractDir = path.join('uploads', 'contracts', id);
         if (!fs.existsSync(contractDir)) {
             fs.mkdirSync(contractDir, { recursive: true });
-            console.log(`✅ Created directory: ${contractDir}`);
-        } else {
-            console.log(`📁 Directory exists: ${contractDir}`);
         }
 
+        const files = req.files || [];
+        let fileIndex = 0;
         const savedAttachments = [];
 
         for (let i = 0; i < attachments.length; i++) {
             const attachment = attachments[i];
-            const { fieldName, fieldType, textValue, fileData, isFromParent } = attachment;
-            console.log(`Processing attachment ${i + 1}/${attachments.length}: fieldName=${fieldName}, fieldType=${fieldType}, hasFileData=${!!fileData}, isFromParent=${!!isFromParent}`);
+
+            // Handle both snake_case (from new index.html) and camelCase (for legacy)
+            const fieldName = attachment.field_name || attachment.fieldName;
+            const fieldType = attachment.field_type || attachment.fieldType;
+            const textValue = attachment.text_value || attachment.textValue;
+            let fileData = attachment.fileData || attachment.file_data;
+
+            console.log(`Processing attachment ${i + 1}/${attachments.length}: name=${fieldName}, type=${fieldType}`);
 
             let imageFilename = null;
 
-            // Handle image data (base64)
-            if (fieldType === 'image' && fileData) {
-                try {
-                    // Remove data URL prefix if present
-                    const matches = fileData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-                    const base64Data = matches ? matches[2] : fileData;
-                    const mimeType = matches ? matches[1] : 'image/jpeg';
-
-                    // Determine file extension
-                    let ext = '.jpg';
-                    if (mimeType.includes('png')) ext = '.png';
-                    else if (mimeType.includes('gif')) ext = '.gif';
-                    else if (mimeType.includes('pdf')) ext = '.pdf';
-
+            if (fieldType === 'image' || fieldType === 'file') {
+                // Priority 1: File from Multer (FormData upload)
+                if (files[fileIndex]) {
+                    const file = files[fileIndex];
+                    const ext = path.extname(file.originalname) || '.jpg';
                     imageFilename = `${fieldName}_${Date.now()}${ext}`;
                     const filePath = path.join(contractDir, imageFilename);
 
-                    fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
-                    console.log(`✅ File saved: ${filePath} (${(Buffer.from(base64Data, 'base64').length / 1024).toFixed(2)} KB)`);
-                } catch (err) {
-                    console.error(`❌ Error saving file for ${fieldName}:`, err);
-                    continue;
+                    fs.writeFileSync(filePath, file.buffer);
+                    console.log(`✅ File saved from buffer: ${filePath}`);
+                    fileIndex++;
                 }
-            } else if (fieldType === 'text') {
-                console.log(`📝 Text attachment: ${fieldName} = "${textValue?.substring(0, 50)}..."`);
+                // Priority 2: Base64 data (JSON upload)
+                else if (fileData) {
+                    try {
+                        const matches = fileData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+                        const base64Content = matches ? matches[2] : fileData;
+                        const mimeType = matches ? matches[1] : 'image/jpeg';
+
+                        let ext = '.jpg';
+                        if (mimeType.includes('png')) ext = '.png';
+                        else if (mimeType.includes('gif')) ext = '.gif';
+                        else if (mimeType.includes('pdf')) ext = '.pdf';
+
+                        imageFilename = `${fieldName}_${Date.now()}${ext}`;
+                        const filePath = path.join(contractDir, imageFilename);
+
+                        fs.writeFileSync(filePath, Buffer.from(base64Content, 'base64'));
+                        console.log(`✅ File saved from base64: ${filePath}`);
+                    } catch (err) {
+                        console.error(`❌ Error saving base64 for ${fieldName}:`, err);
+                    }
+                }
             }
 
             // Save to database
@@ -900,15 +1060,13 @@ app.post('/api/contracts/:id/attachments', attachmentUpload.array('files', 10), 
                 'INSERT INTO contract_attachments (contract_id, field_name, field_type, text_value, image_filename) VALUES (?, ?, ?, ?, ?)',
                 [id, fieldName, fieldType, fieldType === 'text' ? textValue : null, imageFilename]
             );
-            console.log(`✅ Saved to database: ${fieldName}`);
 
-            savedAttachments.push({ fieldName, fieldType, textValue, imageFilename });
+            savedAttachments.push({ fieldName, fieldType, imageFilename });
         }
 
-        console.log(`✅ All ${savedAttachments.length} attachments processed successfully`);
         res.json({ message: 'Attachments saved successfully', attachments: savedAttachments });
     } catch (err) {
-        console.error('❌ Attachment save error:', err);
+        console.error('❌ Attachment error:', err);
         res.status(500).json({ message: err.message });
     }
 });
@@ -994,6 +1152,32 @@ async function checkSchema() {
             }
         }
 
+        // Fix users table "role" column truncation (Expand to 255 chars)
+        try {
+            await connection.query("ALTER TABLE users MODIFY COLUMN role VARCHAR(255) DEFAULT 'staff'");
+            console.log('Users role column length fixed (255 chars).');
+        } catch (roleErr) {
+            // Ignore error if it's just about no changes, but log others
+            console.log('Role column check:', roleErr.message);
+        }
+
+        // Create users table if not exists (Fix for login/hash issues)
+        try {
+            await connection.query(`
+                CREATE TABLE IF NOT EXISTS users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    username VARCHAR(50) NOT NULL UNIQUE,
+                    password_hash VARCHAR(255) NOT NULL,
+                    role VARCHAR(50) DEFAULT 'staff',
+                    display_name VARCHAR(100),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+            console.log('Users table checked/created successfully.');
+        } catch (usersErr) {
+            console.error('Failed to create users table:', usersErr.message);
+        }
+
         // Create terms table if it doesn't exist
         try {
             await connection.query(`
@@ -1065,7 +1249,7 @@ checkSchema().then(() => {
         });
     });
 
-    app.listen(PORT, '0.0.0.0', () => {
+    http.listen(PORT, '0.0.0.0', () => {
         console.log(`Server running on port ${PORT}`);
         console.log(`\n📱 **Access from your phone:**`);
         console.log(`   http://${localIP}:${PORT}`);
