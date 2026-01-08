@@ -15,7 +15,7 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http, {
     cors: { origin: "*" }
 });
-const PORT = process.env.PORT || 3306;
+const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Real-time Socket logic
@@ -1258,5 +1258,6 @@ checkSchema().then(() => {
         console.log(`\n⚠️  Make sure your phone is on the same WiFi network!\n`);
     });
 });
+
 
 
