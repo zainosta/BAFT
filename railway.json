@@ -6,6 +6,6 @@
     "startCommand": "cd public && npm start"
   },
   "deploy": {
-    "startCommand": "cd public && npm start",
+    "startCommand": "cd public && npm start"
   }
 }
