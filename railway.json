@@ -3,9 +3,9 @@
   "build": {
     "builder": "NIXPACKS",
     "buildCommand": "npm install",
-    "startCommand": "cd public && npm start"
+    "startCommand": "npm start"
   },
   "deploy": {
-    "startCommand": "cd public && npm start"
+    "startCommand": "npm start"
   }
 }
