@@ -943,7 +943,7 @@ app.post('/api/contracts/:id/sign', uploadMiddleware, async (req, res) => {
         const contract = rows[0];
 
         // Send Email (Simulation)
-        console.log(`📧 Email simulation: Sending to ${contract?.client_email || 'N/A'}`);
+        // console.log(`📧 Email simulation: Sending to ${contract?.client_email || 'N/A'}`);
         // In production: transporter.sendMail(...)
 
         res.json({ message: 'Signed successfully', file: signedFileName, path: contractPdfPath });
@@ -1258,6 +1258,7 @@ checkSchema().then(() => {
         console.log(`\n⚠️  Make sure your phone is on the same WiFi network!\n`);
     });
 });
+
 
 
 
