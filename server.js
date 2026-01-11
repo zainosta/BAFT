@@ -15,7 +15,7 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http, {
     cors: { origin: "*" }
 });
-const PORT = process.env.PORT || 3306;
+const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Real-time Socket logic
@@ -561,10 +561,24 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 // Terms API
 app.get('/api/terms', async (req, res) => {
     try {
-        const [rows] = await pool.execute('SELECT * FROM terms ORDER BY id DESC');
+        const [rows] = await pool.execute('SELECT * FROM terms ORDER BY display_order ASC, id DESC');
         res.json(rows);
     } catch (err) {
         res.json([]);
+    }
+});
+
+app.put('/api/terms/reorder', authMiddleware, async (req, res) => {
+    const { order } = req.body; // Array of IDs
+    if (!Array.isArray(order)) return res.status(400).json({ message: 'Invalid data' });
+
+    try {
+        for (let i = 0; i < order.length; i++) {
+            await pool.execute('UPDATE terms SET display_order = ? WHERE id = ?', [i + 1, order[i]]);
+        }
+        res.json({ message: 'Order updated' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 });
 
@@ -590,7 +604,45 @@ app.put('/api/terms/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/terms/:id', authMiddleware, async (req, res) => {
     try {
-        await pool.execute('DELETE FROM terms WHERE id=?', [req.params.id]);
+        await pool.execute('DELETE FROM terms WHERE id = ?', [req.params.id]);
+        res.json({ message: 'Deleted' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Employees API (Marketers & Collectors)
+app.get('/api/employees', async (req, res) => {
+    const { role } = req.query;
+    try {
+        let query = 'SELECT * FROM employees';
+        const params = [];
+        if (role) {
+            query += ' WHERE role = ?';
+            params.push(role);
+        }
+        query += ' ORDER BY name ASC';
+        const [rows] = await pool.execute(query, params);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+app.post('/api/employees', authMiddleware, async (req, res) => {
+    const { name, role } = req.body;
+    if (!name || !role) return res.status(400).json({ message: 'Name and role required' });
+    try {
+        const [resDb] = await pool.execute('INSERT INTO employees (name, role) VALUES (?, ?)', [name, role]);
+        res.json({ id: resDb.insertId, name, role });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+app.delete('/api/employees/:id', authMiddleware, async (req, res) => {
+    try {
+        await pool.execute('DELETE FROM employees WHERE id = ?', [req.params.id]);
         res.json({ message: 'Deleted' });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -943,7 +995,7 @@ app.post('/api/contracts/:id/sign', uploadMiddleware, async (req, res) => {
         const contract = rows[0];
 
         // Send Email (Simulation)
-        // console.log(`📧 Email simulation: Sending to ${contract?.client_email || 'N/A'}`);
+        console.log(`📧 Email simulation: Sending to ${contract?.client_email || 'N/A'}`);
         // In production: transporter.sendMail(...)
 
         res.json({ message: 'Signed successfully', file: signedFileName, path: contractPdfPath });
@@ -1258,8 +1310,4 @@ checkSchema().then(() => {
         console.log(`\n⚠️  Make sure your phone is on the same WiFi network!\n`);
     });
 });
-
-
-
-
 

@@ -160,3 +160,6 @@ CREATE TABLE IF NOT EXISTS contract_attachments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_contract_id (contract_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+GRANT ALTER, DROP, CREATE ON contracts_db.* TO 'zain'@'localhost';
+FLUSH PRIVILEGES;
