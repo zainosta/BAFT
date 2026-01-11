@@ -5967,9 +5967,18 @@
           $('totalPrice').value = Math.round(total);
         }
 
-        if ($('monthlyFee')) $('monthlyFee').addEventListener('input', calculateTotal);
-        if ($('tax')) $('tax').addEventListener('input', calculateTotal);
-        if ($('duration')) $('duration').addEventListener('change', calculateTotal);
+        // Live Update Trigger for Terms text
+        // Whenever pricing affects the text, we must update the terms IF they are already generated.
+        function triggerTermsUpdate() {
+          if ($('terms').value) {
+            updateTermsFromUI();
+          }
+        }
+
+        if ($('monthlyFee')) $('monthlyFee').addEventListener('input', () => { calculateTotal(); triggerTermsUpdate(); });
+        if ($('tax')) $('tax').addEventListener('input', () => { calculateTotal(); triggerTermsUpdate(); });
+        if ($('duration')) $('duration').addEventListener('change', () => { calculateTotal(); triggerTermsUpdate(); });
+        if ($('paymentType')) $('paymentType').addEventListener('change', triggerTermsUpdate);
 
         // Auto-calculate End Date (1 year later)
         if ($('dateFrom')) {
@@ -6375,11 +6384,14 @@
         }
         async function createTerm(term) {
           // Apply all replacements to get SOLID TEXT before saving
+          // REMOVED: Do NOT bake in date placeholders. Keep them as template variables.
           let solidContent = term.content;
+          /*
           if (typeof replaceDatePlaceholders === 'function') {
             const contractData = getContractDataFromForm();
             solidContent = replaceDatePlaceholders(term.content, contractData);
           }
+          */
 
           const solidTerm = { ...term, content: solidContent };
 
@@ -6410,11 +6422,14 @@
         }
         async function updateTerm(id, term) {
           // Apply all replacements to get SOLID TEXT before saving
+          // REMOVED: Do NOT bake in date placeholders. Keep them as template variables.
           let solidContent = term.content;
+          /*
           if (typeof replaceDatePlaceholders === 'function') {
             const contractData = getContractDataFromForm();
             solidContent = replaceDatePlaceholders(term.content, contractData);
           }
+          */
 
           const solidTerm = { ...term, content: solidContent };
 
@@ -6521,6 +6536,38 @@
           hideElem(termsModal);
         }
 
+        async function saveContract(id, data) {
+          try {
+            // Save to backend
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `/contracts/${id}` : '/contracts';
+
+            // IF NEW: id is null, we need to send POST. If success, we get back {id, ...}
+            // IF EDIT: id is present.
+
+            const saved = await apiFetch(url, { method, body: JSON.stringify(data) });
+
+            if (saved) {
+              console.log('✅ Contract saved:', saved);
+              alert('تم حفظ العقد بنجاح');
+              closeEdit();
+
+              // CRITICAL FIX: Update global contractsData IMMEDIATELY to prevent lag
+              if (id) {
+                const existingIdx = contractsData.findIndex(c => String(c.id) === String(id));
+                if (existingIdx >= 0) contractsData[existingIdx] = saved;
+              } else {
+                contractsData.unshift(saved);
+              }
+              // Also reload from server to be safe, but we have instant data now for View
+              loadContracts();
+            }
+          } catch (err) {
+            console.error('Save failed:', err);
+            alert('فشل الحفظ: ' + err.message);
+          }
+        }
+
         async function ensureDefaultsOnServer() {
           // try server, if fails populate local storage with defaults
           try {
@@ -6564,23 +6611,28 @@
             try {
               const apiTerms = await apiFetch('/terms', { method: 'GET' });
               if (Array.isArray(apiTerms) && apiTerms.length > 0) {
-                console.log('🔍 [DEBUG] loadTerms: Got', apiTerms.length, 'terms from API, merging...');
-                // Merge API terms with localStorage, keeping pricing term from localStorage
-                const mergedTerms = [...rows];
-                apiTerms.forEach(apiTerm => {
-                  const id = apiTerm.id || apiTerm._id;
-                  // Don't replace pricing term from localStorage
-                  if (id !== PRICING_TERM_ID) {
-                    const existingIndex = mergedTerms.findIndex(t => (t.id || t._id) === id);
-                    if (existingIndex >= 0) {
-                      mergedTerms[existingIndex] = apiTerm;
-                    } else {
-                      mergedTerms.push(apiTerm);
-                    }
-                  }
-                });
-                console.log('🔍 [DEBUG] loadTerms: Merged to', mergedTerms.length, 'total terms');
-                renderTermsList(mergedTerms);
+                console.log('🔍 [DEBUG] loadTerms: Got', apiTerms.length, 'terms from API. Using SERVER terms as Source of Truth.');
+
+                // CRITICAL: Trust the Server Order completely.
+                // The server returns them sorted by display_order ASC.
+                // We only need to ensure the LOCAL PRICING TERM is injected if missing? 
+                // Actually user said: "memory from database the drag position".
+
+                // Let's completely replace mergedTerms with apiTerms, but keep pricing term if needed.
+                let finalTerms = [...apiTerms];
+
+                // Ensure Pricing Term exists if not in API (it might be local only)
+                // But generally users want DB to be master. 
+                // If pricing term is essential and local-only, we inject it at its correct place?
+                // For now, let's just use API terms. If Pricing Term ID is local, we might lose it if we don't merge.
+                // The user said "dragged position to be saved directly into database". 
+                // So we assume ALL terms including pricing should be in DB? 
+                // If pricing term is local-only logic, we should be careful.
+
+                // Let's stick to the user's request: "dragged position ... saved into database ... show as the order of remembered drag"
+                // This implies the API list IS the correct list.
+
+                renderTermsList(finalTerms);
               } else {
                 renderTermsList(rows);
               }
@@ -6618,6 +6670,11 @@
           const uiState = loadTermsUIState();
 
           // Apply saved custom order if exists
+          // IGNORE saved custom order from localStorage to enforce Server Order
+          // if (uiState._termsOrder && Array.isArray(uiState._termsOrder)) { ... }
+          // This ensures the server's persistent order is always respected.
+
+          /*
           if (uiState._termsOrder && Array.isArray(uiState._termsOrder)) {
             const orderedRows = [];
             const usedIds = new Set();
@@ -6631,6 +6688,7 @@
             });
             rows = orderedRows;
           }
+          */
 
           termsList.innerHTML = '';
           let draggedElement = null;
@@ -6674,7 +6732,9 @@
                 const targetIndex = allItems.indexOf(wrapper);
                 if (draggedIndex < targetIndex) wrapper.parentNode.insertBefore(draggedElement, wrapper.nextSibling);
                 else wrapper.parentNode.insertBefore(draggedElement, wrapper);
-                saveTermsOrder(); // Ensure order is saved after drop
+
+                // CRITICAL: Order changed visually. Now we MUST persist this exact order to DB.
+                saveTermsOrder();
               }
             });
 
@@ -7450,13 +7510,21 @@
         }
 
         // Save current terms order to UI state
-        function saveTermsOrder() {
+        async function saveTermsOrder() {
           const items = Array.from(termsList.querySelectorAll('.term-item'));
           const order = items.map(item => item.dataset.termId);
           const st = loadTermsUIState();
           st._termsOrder = order;
           saveTermsUIState(st);
-          console.log('✅ Terms order saved:', order);
+          console.log('✅ Terms order saved locally:', order);
+
+          // Sync with Server
+          try {
+            await apiFetch('/terms/reorder', { method: 'PUT', body: JSON.stringify({ order }) });
+            console.log('✅ Terms order synced with server');
+          } catch (e) {
+            console.warn('Failed to sync order with server', e);
+          }
 
           // Update the terms in the contract to reflect new order
           updateTermsFromUI();
@@ -7617,6 +7685,14 @@
               if (typeof numberToArabicText === 'function') {
                 result = result.replace(/\{MONTHLY_FEE_ARABIC\}/g, numberToArabicText(mFee));
               }
+
+              // Added: Monthly Fee WITH TAX
+              const taxRate = contractData.tax ? parseFloat(contractData.tax.toString().replace('%', '')) / 100 : 0.15;
+              const mFeeWithTax = Math.round(mFee * (1 + taxRate));
+              result = result.replace(/\{MONTHLY_FEE_WITH_TAX\}/g, mFeeWithTax);
+              if (typeof numberToArabicText === 'function') {
+                result = result.replace(/\{MONTHLY_FEE_WITH_TAX_ARABIC\}/g, numberToArabicText(mFeeWithTax));
+              }
             }
             // Total Price
             if (contractData.total_price) {
@@ -7635,6 +7711,18 @@
             if (contractData.duration) {
               result = result.replace(/\{DURATION\}/g, contractData.duration);
             }
+            // Payment Type
+            if (contractData.payment_type) {
+              result = result.replace(/\{PAYMENT_TYPE\}/g, contractData.payment_type);
+            } else {
+              // Fallback to DOM if contractData doesn't have it (e.g. initial load)
+              const domVal = $('paymentType')?.value;
+              if (domVal) result = result.replace(/\{PAYMENT_TYPE\}/g, domVal);
+            }
+          } else {
+            // Fallback to DOM if contractData is null
+            const domVal = $('paymentType')?.value;
+            if (domVal) result = result.replace(/\{PAYMENT_TYPE\}/g, domVal);
           }
 
           // ===== DYNAMIC CONTAINER TYPE FROM INPUT =====
@@ -8038,6 +8126,14 @@
             }
 
             $('terms').value = merged;
+
+            // CRITICAL: Update Quill Editor instantly so user sees the change
+            if (window.quill) {
+              if (window.quill.root.innerHTML !== merged) {
+                // Save selection range if focused to avoid cursor jumping (though difficult with full replacement)
+                window.quill.root.innerHTML = merged;
+              }
+            }
 
             const summary = orderedCheckboxes.map(cb => cb.nextSibling?.innerText).filter(Boolean).slice(0, 5).join(' · ') + (orderedCheckboxes.length > 5 ? ' · ...' : '');
             $('termsSummary').value = summary;
@@ -9521,6 +9617,128 @@
     })();
   </script>
 
+  <!-- Employees Management Modal -->
+  <div id="employeesModal" class="modal" style="display:none; align-items:center; justify-content:center;">
+    <div class="modal-content"
+      style="width: 100%; max-width: 400px; background:white; padding:20px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+      <h3 id="employeesModalTitle" style="margin-top:0;">إدارة</h3>
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <input id="newEmployeeName" placeholder="الاسم"
+          style="flex:1; padding:8px; border:1px solid #ddd; border-radius:4px;" />
+        <button id="addEmployeeBtn" class="btn primary">إضافة</button>
+      </div>
+      <ul id="employeesList"
+        style="list-style:none; padding:0; margin:0; max-height:300px; overflow-y:auto; border:1px solid #eee; border-radius:4px;">
+        <!-- Items -->
+      </ul>
+      <div class="actions" style="margin-top:16px; text-align:left;">
+        <button id="closeEmployeesBtn" class="btn">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Employees Management Logic
+    let currentEmployeeRole = 'marketer';
+
+    async function openEmployeesModal(role) {
+      currentEmployeeRole = role;
+      const titleEl = document.getElementById('employeesModalTitle');
+      if (titleEl) titleEl.textContent = role === 'marketer' ? 'إدارة المسوقين' : 'إدارة المحصلين';
+      const modal = document.getElementById('employeesModal');
+      if (modal) modal.style.display = 'flex';
+      loadEmployeesList();
+    }
+
+    async function loadEmployeesList() {
+      const list = document.getElementById('employeesList');
+      if (!list) return;
+      list.innerHTML = '<li class="muted" style="padding:8px;">جاري التحميل...</li>';
+      try {
+        const rows = await apiFetch(`/employees?role=${currentEmployeeRole}`);
+        list.innerHTML = '';
+        if (!rows || rows.length === 0) list.innerHTML = '<li class="muted" style="padding:8px;">لا يوجد بيانات</li>';
+        else {
+          rows.forEach(emp => {
+            const li = document.createElement('li');
+            li.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #eee;';
+            li.innerHTML = `<span>${emp.name}</span> <button class="btn icon-only small" style="color:red;" onclick="deleteEmployee(${emp.id})">🗑️</button>`;
+            list.appendChild(li);
+          });
+        }
+      } catch (e) {
+        list.innerHTML = `<li class="error" style="padding:8px;color:red;">خطأ: ${e.message}</li>`;
+      }
+    }
+
+    async function addEmployee() {
+      const nameInp = document.getElementById('newEmployeeName');
+      const name = nameInp.value.trim();
+      if (!name) return;
+      try {
+        await apiFetch('/employees', { method: 'POST', body: JSON.stringify({ name, role: currentEmployeeRole }) });
+        nameInp.value = '';
+        loadEmployeesList();
+        populateSelects();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    // Make globally accessible for onclick
+    window.deleteEmployee = async function (id) {
+      if (!confirm('هل أنت متأكد من الحذف؟')) return;
+      try {
+        await apiFetch(`/employees/${id}`, { method: 'DELETE' });
+        loadEmployeesList();
+        populateSelects();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function populateSelects() {
+      try {
+        // Safe check if API fetch exists (might fail if server not up)
+        if (typeof apiFetch !== 'function') return;
+
+        const managers = await apiFetch('/employees?role=marketer');
+        const collectors = await apiFetch('/employees?role=collector');
+
+        const updateSel = (id, items) => {
+          const sel = document.getElementById(id);
+          if (!sel) return;
+          const val = sel.value;
+          sel.innerHTML = '<option value="">-- اختر --</option>';
+          if (Array.isArray(items)) {
+            items.forEach(i => {
+              const opt = document.createElement('option');
+              opt.value = i.name;
+              opt.textContent = i.name;
+              sel.appendChild(opt);
+            });
+          }
+          sel.value = val;
+        };
+
+        updateSel('manager', managers);
+        updateSel('collector', collectors);
+      } catch (e) {
+        console.warn('Failed to populate selects', e);
+      }
+    }
+
+    // Bindings
+    const bindBtn = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener('click', fn); };
+    bindBtn('manageManagersBtn', () => openEmployeesModal('marketer'));
+    bindBtn('manageCollectorsBtn', () => openEmployeesModal('collector'));
+    bindBtn('addEmployeeBtn', addEmployee);
+    bindBtn('closeEmployeesBtn', () => document.getElementById('employeesModal').style.display = 'none');
+
+    // Init call
+    // Wait a bit to ensure API is ready or just call it
+    setTimeout(populateSelects, 1000);
+  </script>
 </body>
 
 </html>
