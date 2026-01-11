@@ -1,50 +1,50 @@
-# # Build public and deploy to GitHub Pages (publishes public/ as static site)
-# name: Deploy public to GitHub Pages
+# Build public and deploy to GitHub Pages (publishes public/ as static site)
+name: Deploy public to GitHub Pages
 
-# on:
-#   push:
-#     branches: [ "main" ]
-#   workflow_dispatch:
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
 
-# permissions:
-#   contents: read
-#   pages: write
-#   id-token: write
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
-# jobs:
-#   build-and-deploy:
-#     runs-on: ubuntu-latest
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
-#     strategy:
-#       matrix:
-#         node-version: [20.x]
+    strategy:
+      matrix:
+        node-version: [20.x]
 
-#     steps:
-#     - name: Checkout repository
-#       uses: actions/checkout@v4
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-#     - name: Use Node.js ${{ matrix.node-version }}
-#       uses: actions/setup-node@v4
-#       with:
-#         node-version: ${{ matrix.node-version }}
-#         cache: 'npm'
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
 
-#     - name: Install public dependencies
-#       run: npm ci
-#       working-directory: ./public
+    - name: Install public dependencies
+      run: npm ci
+      working-directory: ./public
 
-#     - name: Build public (if present)
-#       run: npm run build --if-present
-#       working-directory: ./public
+    - name: Build public (if present)
+      run: npm run build --if-present
+      working-directory: ./public
 
-#     - name: Run tests in public (if any)
-#       run: npm run test --if-present
-#       working-directory: ./public
+    - name: Run tests in public (if any)
+      run: npm run test --if-present
+      working-directory: ./public
 
-#     - name: Upload artifact for GitHub Pages
-#       uses: actions/upload-pages-artifact@v3
-#       with:
-#         path: ./public
+    - name: Upload artifact for GitHub Pages
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./public
 
-#     - name: Deploy to GitHub Pages
-#       uses: actions/deploy-pages@v4
+    - name: Deploy to GitHub Pages
+      uses: actions/deploy-pages@v4
