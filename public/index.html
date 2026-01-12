@@ -1323,7 +1323,9 @@
               <label>موقع الحاوية (إحداثيات)</label>
               <div style="display:flex;gap:8px;align-items:center;">
                 <input id="containerLocation" placeholder="lat,lng" />
-                <button class="btn" id="pickContainerBtn">اختر من خرائط Google</button>
+                <button class="btn" id="btnMapPicker_V2" type="button"
+                  onclick="window.openMapModalFor('container')">اختر من
+                  خرائط Google</button>
                 <a id="containerGoogleLink" class="muted" href="#" target="_blank" style="display:none">عرض في خرائط
                   Google</a>
               </div>
@@ -1965,36 +1967,8 @@
 
     <div class="container">
 
-      <!-- Google Maps picker modal (hidden). It does NOT embed Google Maps; it provides "فتح خرائط Google" + paste flow. -->
-      <div id="mapModal" class="map-modal" role="dialog" aria-hidden="true" style="display:none;">
-        <div class="map-modal-content">
-          <h4 id="mapModalTitle">اختر الموقع عبر خرائط Google</h4>
-
-          <div id="mapFallback" style="margin-bottom:8px;">
-            <p class="muted">سيتم فتح خرائط Google في نافذة جديدة — سجّل الدخول واختر الموقع ثم انسخ رابط الصفحة (Share
-              أو
-              شريط العنوان).</p>
-            <ol style="direction:rtl;text-align:right;">
-              <li>في خرائط Google: اضغط على الموقع أو استخدم "What's here?" للحصول على الإحداثيات.</li>
-              <li>انسخ رابط الصفحة (Ctrl+C) أو استخدم مشاركة الموقع.</li>
-              <li>ارجع إلى هذه النافذة واضغط "لصق من الحافظة". النظام سيستخرج الإحداثيات ويضعها في الحقل.</li>
-            </ol>
-          </div>
-
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-            <button class="btn primary" id="openGoogleMapsBtn">افتح خرائط Google</button>
-            <button class="btn" id="pasteCoordsBtn">لصق من الحافظة</button>
-            <input id="selectedCoords" placeholder="الصق رابط خرائط Google أو الإحداثيات هنا"
-              style="flex:1;padding:8px;border-radius:8px;border:1px solid #e0e6ef" />
-            <button class="btn" id="confirmCoordsBtn">تأكيد</button>
-            <button class="btn" id="cancelCoordsBtn">إلغاء</button>
-          </div>
-
-          <div class="muted" style="font-size:12px">يدعم لصق: رابط خرائط Google (يحتوي @lat,lng أو !3dLAT!4dLNG) أو
-            إحداثيات
-            يدوياً (lat,lng) أو بصيغة N/S/E/W.</div>
-        </div>
-      </div>
+      <!-- Google Maps picker modal - Beautiful redesigned version -->
+      <!-- Map Modal Moved to End of Body -->
 
       <!-- Contract Signing Modal -->
       <div id="signingModal" class="map-modal" role="dialog" aria-hidden="true" style="display:none;">
@@ -2180,7 +2154,8 @@
       console.log('✅ INDEX.HTML LOADED - VERSION: 2025-12-06-02:30 - PRICING TERM FEATURE ACTIVE');
       document.addEventListener('DOMContentLoaded', () => {
         const API_BASE = '/api';
-        let token = null;
+        let token = null; // Local reference
+        window.authToken = null; // Global reference for other script blocks
         let currentPickerTarget = null; // 'container' or 'pickup'
 
         // Initialize Socket.io
@@ -2406,11 +2381,14 @@
         // Mock apiFetch for compatibility with existing Terms logic if needed, 
         // but we will try to rely on local storage helpers for main logic.
         // --- API helper ---
-        async function apiFetch(path, opts = {}) {
+        // CRITICAL: Make apiFetch global so it can be accessed from other script blocks
+        window.apiFetch = async function apiFetch(path, opts = {}) {
           console.log(`[API] Request: ${path}`, opts.method || 'GET');
           opts.headers = opts.headers || {};
           if (!opts.headers['Content-Type'] && !(opts.body instanceof FormData)) opts.headers['Content-Type'] = 'application/json';
-          if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+          // Check both local and global token for cross-script compatibility
+          const authToken = token || window.authToken;
+          if (authToken) opts.headers['Authorization'] = 'Bearer ' + authToken;
           try {
             const res = await fetch(API_BASE + path, opts);
             console.log(`[API] Response: ${path} Status: ${res.status}`);
@@ -2929,21 +2907,9 @@
         }
 
         // Event Listeners for Management
-        const manageManagersBtn = $('manageManagersBtn');
-        if (manageManagersBtn) {
-          manageManagersBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            openManagementModal('managers');
-          });
-        }
-
-        const manageCollectorsBtn = $('manageCollectorsBtn');
-        if (manageCollectorsBtn) {
-          manageCollectorsBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            openManagementModal('collectors');
-          });
-        }
+        // NOTE: manageManagersBtn and manageCollectorsBtn handlers are defined at end of file
+        // in the employees management section using the API-based openEmployeesModal function.
+        // Do NOT add duplicate handlers here.
 
         const addListItemBtn = $('addListItemBtn');
         if (addListItemBtn) {
@@ -2980,6 +2946,7 @@
             const json = await res.json();
             if (!res.ok) { $('authMsg').textContent = json.message || 'خطأ'; return; }
             token = json.token;
+            window.authToken = json.token; // Make globally accessible
             const user = json.user;
             // Store visible user info globally for permission checks
             window.currentUser = user;
@@ -5422,8 +5389,9 @@
           });
         }
 
+        /* MOVED TO ROBUST GLOBAL SCRIPT AT END OF FILE
         // Restore Missing Google Maps Picker Functions
-        function openMapModalFor(target) {
+        window.openMapModalFor = function openMapModalFor(target) {
           // only allow when form visible
           if ($('formWrap').style.display === 'none') {
             alert('افتح نموذج إنشاء/تعديل العقد أولاً ثم اختر الموقع من خرائط Google.');
@@ -5553,12 +5521,13 @@
         }
 
         // attach events
-        $('pickContainerBtn').addEventListener('click', () => openMapModalFor('container'));
+        // $('pickContainerBtn').addEventListener('click', () => openMapModalFor('container')); // Moved to inline onclick for robustness
         // $('pickPickupBtn').addEventListener('click', () => openMapModalFor('pickup'));
         $('openGoogleMapsBtn').addEventListener('click', openGoogleMapsWindow);
         $('pasteCoordsBtn').addEventListener('click', pasteCoordsFromClipboard);
         $('confirmCoordsBtn').addEventListener('click', confirmCoordsFromModal);
         $('cancelCoordsBtn').addEventListener('click', closeMapModal);
+        */
 
         // Terms modal bindings
         const safe = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', fn); };
@@ -9341,6 +9310,7 @@
               const user = JSON.parse(savedUser);
               window.currentUser = user;
               token = savedToken;
+              window.authToken = savedToken; // Make globally accessible
 
               console.log('Auto-logging in user:', user.username);
 
@@ -9618,7 +9588,8 @@
   </script>
 
   <!-- Employees Management Modal -->
-  <div id="employeesModal" class="modal" style="display:none; align-items:center; justify-content:center;">
+  <div id="employeesModal" class="modal"
+    style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:9999; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
     <div class="modal-content"
       style="width: 100%; max-width: 400px; background:white; padding:20px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
       <h3 id="employeesModalTitle" style="margin-top:0;">إدارة</h3>
@@ -9650,82 +9621,132 @@
       loadEmployeesList();
     }
 
-    async function loadEmployeesList() {
+    // Convert role to storage type: 'marketer' -> 'managers', 'collector' -> 'collectors'
+    function roleToStorageType(role) {
+      return role === 'marketer' ? 'managers' : 'collectors';
+    }
+
+    // Load employees list from localStorage
+    function loadEmployeesList() {
       const list = document.getElementById('employeesList');
       if (!list) return;
-      list.innerHTML = '<li class="muted" style="padding:8px;">جاري التحميل...</li>';
-      try {
-        const rows = await apiFetch(`/employees?role=${currentEmployeeRole}`);
-        list.innerHTML = '';
-        if (!rows || rows.length === 0) list.innerHTML = '<li class="muted" style="padding:8px;">لا يوجد بيانات</li>';
-        else {
-          rows.forEach(emp => {
-            const li = document.createElement('li');
-            li.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #eee;';
-            li.innerHTML = `<span>${emp.name}</span> <button class="btn icon-only small" style="color:red;" onclick="deleteEmployee(${emp.id})">🗑️</button>`;
-            list.appendChild(li);
-          });
-        }
-      } catch (e) {
-        list.innerHTML = `<li class="error" style="padding:8px;color:red;">خطأ: ${e.message}</li>`;
+
+      const storageType = roleToStorageType(currentEmployeeRole);
+      const STORAGE_MANAGERS = 'managers_list';
+      const STORAGE_COLLECTORS = 'collectors_list';
+      const storageKey = storageType === 'managers' ? STORAGE_MANAGERS : STORAGE_COLLECTORS;
+      const stored = localStorage.getItem(storageKey);
+      const items = stored ? JSON.parse(stored) : [];
+
+      list.innerHTML = '';
+      if (!items || items.length === 0) {
+        list.innerHTML = '<li class="muted" style="padding:8px;">لا يوجد بيانات</li>';
+      } else {
+        items.forEach((name, index) => {
+          const li = document.createElement('li');
+          li.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #eee;';
+          li.innerHTML = `<span>${name}</span> <button class="btn icon-only small" style="color:red;" onclick="deleteEmployee(${index})">🗑️</button>`;
+          list.appendChild(li);
+        });
       }
     }
 
-    async function addEmployee() {
+    // Add new employee to localStorage
+    function addEmployee() {
       const nameInp = document.getElementById('newEmployeeName');
       const name = nameInp.value.trim();
-      if (!name) return;
-      try {
-        await apiFetch('/employees', { method: 'POST', body: JSON.stringify({ name, role: currentEmployeeRole }) });
-        nameInp.value = '';
-        loadEmployeesList();
-        populateSelects();
-      } catch (e) {
-        alert(e.message);
+      if (!name) {
+        alert('يرجى إدخال الاسم');
+        return;
+      }
+
+      const storageType = roleToStorageType(currentEmployeeRole);
+      const STORAGE_MANAGERS = 'managers_list';
+      const STORAGE_COLLECTORS = 'collectors_list';
+      const storageKey = storageType === 'managers' ? STORAGE_MANAGERS : STORAGE_COLLECTORS;
+      const stored = localStorage.getItem(storageKey);
+      const items = stored ? JSON.parse(stored) : [];
+
+      if (items.includes(name)) {
+        alert('هذا الاسم موجود مسبقاً');
+        return;
+      }
+
+      items.push(name);
+      localStorage.setItem(storageKey, JSON.stringify(items));
+      nameInp.value = '';
+      loadEmployeesList();
+
+      // Also update the dropdown
+      const selectId = storageType === 'managers' ? 'manager' : 'collector';
+      const selectEl = document.getElementById(selectId);
+      if (selectEl) {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        selectEl.appendChild(opt);
       }
     }
 
-    // Make globally accessible for onclick
-    window.deleteEmployee = async function (id) {
+    // Make globally accessible for onclick - delete employee from localStorage
+    window.deleteEmployee = function (index) {
       if (!confirm('هل أنت متأكد من الحذف؟')) return;
-      try {
-        await apiFetch(`/employees/${id}`, { method: 'DELETE' });
+
+      const storageType = roleToStorageType(currentEmployeeRole);
+      const STORAGE_MANAGERS = 'managers_list';
+      const STORAGE_COLLECTORS = 'collectors_list';
+      const storageKey = storageType === 'managers' ? STORAGE_MANAGERS : STORAGE_COLLECTORS;
+      const stored = localStorage.getItem(storageKey);
+      const items = stored ? JSON.parse(stored) : [];
+
+      if (index >= 0 && index < items.length) {
+        items.splice(index, 1);
+        localStorage.setItem(storageKey, JSON.stringify(items));
         loadEmployeesList();
-        populateSelects();
-      } catch (e) {
-        alert(e.message);
+
+        // Also update the dropdown
+        const selectId = storageType === 'managers' ? 'manager' : 'collector';
+        const selectEl = document.getElementById(selectId);
+        if (selectEl) {
+          selectEl.innerHTML = '<option value="">-- اختر --</option>';
+          items.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item;
+            opt.textContent = item;
+            selectEl.appendChild(opt);
+          });
+        }
       }
     }
 
-    async function populateSelects() {
-      try {
-        // Safe check if API fetch exists (might fail if server not up)
-        if (typeof apiFetch !== 'function') return;
+    // Populate selects from localStorage (no API needed)
+    function populateSelects() {
+      const STORAGE_MANAGERS = 'managers_list';
+      const STORAGE_COLLECTORS = 'collectors_list';
 
-        const managers = await apiFetch('/employees?role=marketer');
-        const collectors = await apiFetch('/employees?role=collector');
+      const storedManagers = localStorage.getItem(STORAGE_MANAGERS);
+      const storedCollectors = localStorage.getItem(STORAGE_COLLECTORS);
+      const managers = storedManagers ? JSON.parse(storedManagers) : [];
+      const collectors = storedCollectors ? JSON.parse(storedCollectors) : [];
 
-        const updateSel = (id, items) => {
-          const sel = document.getElementById(id);
-          if (!sel) return;
-          const val = sel.value;
-          sel.innerHTML = '<option value="">-- اختر --</option>';
-          if (Array.isArray(items)) {
-            items.forEach(i => {
-              const opt = document.createElement('option');
-              opt.value = i.name;
-              opt.textContent = i.name;
-              sel.appendChild(opt);
-            });
-          }
-          sel.value = val;
-        };
+      const updateSel = (id, items) => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const val = sel.value;
+        sel.innerHTML = '<option value="">-- اختر --</option>';
+        if (Array.isArray(items)) {
+          items.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            sel.appendChild(opt);
+          });
+        }
+        sel.value = val;
+      };
 
-        updateSel('manager', managers);
-        updateSel('collector', collectors);
-      } catch (e) {
-        console.warn('Failed to populate selects', e);
-      }
+      updateSel('manager', managers);
+      updateSel('collector', collectors);
     }
 
     // Bindings
@@ -9738,6 +9759,229 @@
     // Init call
     // Wait a bit to ensure API is ready or just call it
     setTimeout(populateSelects, 1000);
+  </script>
+
+  <!-- Google Maps picker modal - Moved Ensure Top Level -->
+  <div id="mapModal" class="map-modal" role="dialog" aria-hidden="true"
+    style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:9999; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+    <div class="map-modal-content"
+      style="width:95%; max-width:550px; background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); padding:0; border-radius:20px; box-shadow:0 25px 50px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1); overflow:hidden; animation: modalSlideIn 0.3s ease-out;">
+
+      <!-- Header with gradient -->
+      <div
+        style="background:linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%); padding:20px 24px; color:white;">
+        <h4 id="mapModalTitle"
+          style="margin:0; font-size:1.25rem; font-weight:700; display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.5rem;">📍</span>
+          اختر الموقع عبر خرائط Google
+        </h4>
+      </div>
+
+      <!-- Content -->
+      <div style="padding:24px;">
+        <!-- Instructions Card -->
+        <div id="mapFallback"
+          style="background:linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border:1px solid #bae6fd; border-radius:12px; padding:16px; margin-bottom:20px;">
+          <p style="color:#0369a1; font-weight:600; margin:0 0 12px 0; display:flex; align-items:center; gap:8px;">
+            <span>💡</span> خطوات اختيار الموقع:
+          </p>
+          <ol style="direction:rtl; text-align:right; margin:0; padding-right:20px; color:#075985; line-height:1.8;">
+            <li>اضغط على <strong>"فتح خرائط Google"</strong> أدناه</li>
+            <li>اختر الموقع المطلوب في الخريطة</li>
+            <li>انسخ رابط الصفحة (Ctrl+C)</li>
+            <li>ارجع هنا واضغط <strong>"لصق من الحافظة"</strong></li>
+          </ol>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+          <button class="btn" id="openGoogleMapsBtn"
+            style="flex:1; min-width:140px; padding:14px 20px; background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; color:white; font-weight:600; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(16,185,129,0.3); transition:all 0.2s;">
+            <span style="font-size:1.2rem;">🗺️</span>
+            فتح خرائط Google
+          </button>
+          <button class="btn" id="pasteCoordsBtn"
+            style="flex:1; min-width:140px; padding:14px 20px; background:linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border:none; color:white; font-weight:600; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(139,92,246,0.3); transition:all 0.2s;">
+            <span style="font-size:1.2rem;">📋</span>
+            لصق من الحافظة
+          </button>
+        </div>
+
+        <!-- Input Field -->
+        <div style="margin-bottom:16px;">
+          <label style="display:block; margin-bottom:8px; font-weight:600; color:#374151;">الإحداثيات أو
+            الرابط:</label>
+          <input id="selectedCoords" placeholder="الصق رابط خرائط Google أو الإحداثيات هنا..."
+            style="width:100%; padding:14px 16px; border-radius:10px; border:2px solid #e5e7eb; font-size:0.95rem; transition:all 0.2s; box-sizing:border-box;"
+            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59,130,246,0.2)';"
+            onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';" />
+        </div>
+
+        <!-- Help Text -->
+        <div style="background:#f9fafb; border-radius:8px; padding:12px; margin-bottom:20px; border:1px solid #e5e7eb;">
+          <p style="color:#6b7280; font-size:0.85rem; margin:0; line-height:1.6;">
+            <strong>📌 الصيغ المدعومة:</strong> رابط خرائط Google (يحتوي @lat,lng) • إحداثيات يدوية (lat,lng) • صيغة
+            N/S/E/W
+          </p>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div style="display:flex; gap:12px; justify-content:flex-end;">
+          <button class="btn" id="cancelCoordsBtn"
+            style="padding:12px 24px; background:#f3f4f6; border:1px solid #d1d5db; color:#374151; font-weight:600; border-radius:10px; cursor:pointer; transition:all 0.2s;">
+            إلغاء
+          </button>
+          <button class="btn primary" id="confirmCoordsBtn"
+            style="padding:12px 28px; background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border:none; color:white; font-weight:600; border-radius:10px; cursor:pointer; box-shadow:0 4px 12px rgba(59,130,246,0.3); transition:all 0.2s;">
+            ✓ تأكيد الموقع
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // ROBUST MAP MODAL LOGIC (Fixes Initialization Issues)
+    // ==========================================
+    (function () {
+      // Local Helpers
+      const $ = id => document.getElementById(id);
+
+      // State
+      let currentPickerTarget = null;
+
+      // 1. OPEN MODAL (Global)
+      window.openMapModalFor = function (target) {
+        console.log('OpenMapModalFor called:', target);
+
+        // STOP PROPAGATION if event exists (Defensive)
+        if (window.event) window.event.stopPropagation();
+
+        // FORCE CLOSE other modals to prevent "double modal" or background ghosting
+        const termsModal = $('termsModal'); if (termsModal) termsModal.style.display = 'none';
+        const emplModal = $('employeesModal'); if (emplModal) emplModal.style.display = 'none';
+        const userModal = $('usersModal'); if (userModal) userModal.style.display = 'none';
+
+        // Check form visibility safely
+        const formWrap = $('formWrap');
+        if (formWrap && getComputedStyle(formWrap).display === 'none') {
+          alert('افتح نموذج إنشاء/تعديل العقد أولاً ثم اختر الموقع من خرائط Google.');
+          return;
+        }
+
+        currentPickerTarget = target;
+
+        // PRE-FILL EXISTING INPUT VALUE
+        const currentInput = $(target === 'container' ? 'containerLocation' : 'pickupLocation');
+        const input = $('selectedCoords');
+        if (input) {
+          input.value = (currentInput && currentInput.value) ? currentInput.value : '';
+        }
+
+
+        const modal = $('mapModal');
+        if (modal) {
+          modal.style.display = 'flex'; // Force flex for centering
+          modal.setAttribute('aria-hidden', 'false');
+        } else {
+          console.error('Map Modal Element not found!');
+        }
+      };
+
+      // 2. CLOSE MODAL (Global)
+      window.closeMapModal = function () {
+        currentPickerTarget = null;
+        const modal = $('mapModal');
+        if (modal) modal.style.display = 'none';
+      };
+
+      // 3. UPDATE LINK (Global) - Fix for Edit Contract error
+      window.updateGoogleLink = function (type, coordStr) {
+        const link = (type === 'container') ? $('containerGoogleLink') : $('pickupGoogleLink');
+        if (!link) return;
+
+        if (coordStr && coordStr.includes(',')) {
+          link.href = 'https://www.google.com/maps?q=' + encodeURIComponent(coordStr);
+          link.style.display = 'inline';
+        } else {
+          link.href = '#';
+          link.style.display = 'none';
+        }
+      };
+
+      // 4. OPEN EXTERNAL MAP
+      window.openGoogleMapsWindow = function () {
+        window.open('https://www.google.com/maps', '_blank', 'noopener');
+      };
+
+      // 4. PASTE
+      window.pasteCoordsFromClipboard = async function () {
+        try {
+          const text = await navigator.clipboard.readText();
+          if ($('selectedCoords')) $('selectedCoords').value = text || '';
+        } catch (e) {
+          alert('لا يمكن القراءة من الحافظة تلقائياً. يرجى اللصق يدوياً (Ctrl+V).');
+        }
+      };
+
+      // 5. CONFIRM SELECTION
+      window.confirmCoordsFromModal = function () {
+        const input = $('selectedCoords');
+        if (!input) return;
+        const raw = input.value.trim();
+
+        // Robust Parsing Logic
+        let coords = null;
+        if (raw) {
+          // Direct lat,lng
+          let m = raw.match(/(-?\d+(?:\.\d+)?)[,\s]+(-?\d+(?:\.\d+)?)/);
+          if (m) coords = parseFloat(m[1]).toFixed(6) + ',' + parseFloat(m[2]).toFixed(6);
+
+          // Google Maps URL patterns
+          if (!coords) {
+            m = raw.match(/@(-?\d+\.\d+),(-?\d+\.\d+),/) ||
+              raw.match(/[?&]q=([-.\d]+),\s*([-.\d]+)/) ||
+              raw.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+            if (m) coords = parseFloat(m[1]).toFixed(6) + ',' + parseFloat(m[2]).toFixed(6);
+          }
+        }
+
+        if (!coords) {
+          alert('تعذر استخراج الإحداثيات. الرجاء لصق رابط خرائط Google أو إحداثيات بصيغة lat,lng');
+          return;
+        }
+
+        if (currentPickerTarget === 'container') {
+          const targetInput = $('containerLocation');
+          if (targetInput) targetInput.value = coords;
+
+          const link = $('containerGoogleLink');
+          if (link) {
+            link.href = 'https://www.google.com/maps?q=' + encodeURIComponent(coords);
+            link.style.display = 'inline';
+          }
+        } else if (currentPickerTarget === 'pickup') { // In case we re-enable pickup
+          const targetInput = $('pickupLocation');
+          if (targetInput) targetInput.value = coords;
+        }
+
+        closeMapModal();
+      };
+
+      // 6. BINDINGS (Wait for next tick to ensure DOM is ready, though script at end is usually fine)
+      setTimeout(() => {
+        const bind = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
+
+        bind('openGoogleMapsBtn', window.openGoogleMapsWindow);
+        bind('pasteCoordsBtn', window.pasteCoordsFromClipboard);
+        bind('confirmCoordsBtn', window.confirmCoordsFromModal);
+        bind('cancelCoordsBtn', window.closeMapModal);
+
+        console.log('✅ Map Modal Bindings Complete');
+      }, 100);
+
+    })();
   </script>
 </body>
 
